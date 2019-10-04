@@ -3,9 +3,10 @@ module Main exposing (main)
 import Browser
 import Html exposing (Html, div, text)
 import Html.Attributes exposing (class)
+import Html.Events as Events
 
 
-main : Program () Model msg
+main : Program () Model Msg
 main =
   Browser.sandbox
     { init = init
@@ -29,33 +30,44 @@ init =
 -- UPDATE
 
 
-update : msg -> Model -> Model
-update _ = identity
+type Msg
+  = MouseOver Int
+
+
+update : Msg -> Model -> Model
+update msg model =
+  case msg of
+    MouseOver value ->
+      { model | rating = value }
 
 
 -- VIEW
 
 
-view : Model -> Html msg
+view : Model -> Html Msg
 view { rating } =
   viewRater 5 rating
 
 
-viewRater : Int -> Int -> Html msg
+viewRater : Int -> Int -> Html Msg
 viewRater total rating =
   div [ class "rater" ]
     (viewStars 1 rating selected ++ viewStars (rating + 1) total unselected)
 
 
-viewStars : Int -> Int -> Html msg -> List (Html msg)
+viewStars : Int -> Int -> Html Msg -> List (Html Msg)
 viewStars low high star =
   List.range low high
-    |> List.map (always (viewStar star))
+    |> List.map (viewStar star)
 
 
-viewStar : Html msg -> Html msg
-viewStar star =
-  div [ class "rater__star" ] [ star ]
+viewStar : Html Msg -> Int -> Html Msg
+viewStar star value =
+  div
+    [ class "rater__star"
+    , Events.onMouseOver (MouseOver value)
+    ]
+    [ star ]
 
 
 selected : Html msg
