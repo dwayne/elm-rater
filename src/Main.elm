@@ -25,6 +25,8 @@ type alias Model =
 
   , rater4 : Rater.State
   , rater4TransientRating : Maybe Int
+
+  , rater5 : Rater.State
   }
 
 
@@ -36,6 +38,8 @@ init =
 
   , rater4 = Rater.initial 2
   , rater4TransientRating = Nothing
+
+  , rater5 = Rater.initial 3
   }
 
 
@@ -49,6 +53,7 @@ type Msg
   | NewRaterMsg4 Rater.Msg
   | HoveredOverRater4 Int
   | LeftRater4
+  | NoOp
 
 
 update : Msg -> Model -> Model
@@ -101,20 +106,23 @@ update msg model =
     LeftRater4 ->
       { model | rater4TransientRating = Nothing }
 
+    NoOp ->
+      model
+
 
 -- VIEW
 
 
 view : Model -> Html Msg
-view { rater1, rater2, rater3, rater4, rater4TransientRating } =
+view { rater1, rater2, rater3, rater4, rater4TransientRating, rater5 } =
   div []
     [ h1 [] [ text "Elm Rater Examples" ]
 
     , h2 [] [ text "A 5 star rater" ]
-    , Html.map NewRaterMsg1 (Rater.view 5 rater1)
+    , Html.map NewRaterMsg1 (Rater.view 5 False rater1)
 
     , h2 [] [ text "You can have any number of stars, for e.g. 25" ]
-    , Html.map NewRaterMsg2 (Rater.view 25 rater2)
+    , Html.map NewRaterMsg2 (Rater.view 25 False rater2)
 
     , h2 [] [ text "You can disable clearing" ]
     , p []
@@ -124,7 +132,7 @@ view { rater1, rater2, rater3, rater4, rater4TransientRating } =
             , "clearing has been disabled."
             ]
         ]
-    , Html.map NewRaterMsg3 (Rater.view 5 rater3)
+    , Html.map NewRaterMsg3 (Rater.view 5 False rater3)
 
     , h2 [] [ text "Customize onHover and onLeave" ]
     , p []
@@ -136,5 +144,8 @@ view { rater1, rater2, rater3, rater4, rater4TransientRating } =
               Just transientRating ->
                 "You are currently over: " ++ String.fromInt transientRating
         ]
-    , Html.map NewRaterMsg4 (Rater.view 5 rater4)
+    , Html.map NewRaterMsg4 (Rater.view 5 False rater4)
+
+    , h2 [] [ text "Read only" ]
+    , Html.map (always NoOp) (Rater.view 5 True rater5)
     ]

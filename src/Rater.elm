@@ -78,8 +78,8 @@ update clearable onHover onLeave msg state =
           )
 
 
-view : Int -> State -> Html Msg
-view total state =
+view : Int -> Bool -> State -> Html Msg
+view total readOnly state =
   let
     rating =
       case state of
@@ -89,7 +89,21 @@ view total state =
         Transient _ transientValue ->
           transientValue
   in
-    viewRater total rating
+    if readOnly then
+      viewReadOnlyRater total rating
+    else
+      viewRater total rating
+
+
+viewReadOnlyRater : Int -> Int -> Html msg
+viewReadOnlyRater total rating =
+  div [ class "rater is-read-only" ]
+    (viewStars 1 rating (viewReadOnlyStar selected) ++ viewStars (rating + 1) total (viewReadOnlyStar unselected))
+
+
+viewReadOnlyStar : Html msg -> Int -> Html msg
+viewReadOnlyStar star n =
+  div [ class "rater__star" ] [ star ]
 
 
 viewRater : Int -> Int -> Html Msg
@@ -98,13 +112,7 @@ viewRater total rating =
     [ class "rater"
     , Events.onMouseOut MouseOut
     ]
-    (viewStars 1 rating selected ++ viewStars (rating + 1) total unselected)
-
-
-viewStars : Int -> Int -> Html Msg -> List (Html Msg)
-viewStars low high star =
-  List.range low high
-    |> List.map (viewStar star)
+    (viewStars 1 rating (viewStar selected) ++ viewStars (rating + 1) total (viewStar unselected))
 
 
 viewStar : Html Msg -> Int -> Html Msg
@@ -115,6 +123,12 @@ viewStar star value =
     , Events.onClick (Clicked value)
     ]
     [ star ]
+
+
+viewStars : Int -> Int -> (Int -> Html msg) -> List (Html msg)
+viewStars low high starBuilder =
+  List.range low high
+    |> List.map starBuilder
 
 
 selected : Html msg
