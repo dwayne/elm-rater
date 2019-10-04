@@ -2,8 +2,11 @@ module Rater exposing
   ( State
   , initial
 
+  , UpdateConfig
+  , defaultUpdateConfig
+
   , Msg
-  , update
+  , update, updateCustom
 
   , Mode(..)
   , view
@@ -24,14 +27,36 @@ initial value =
   Fixed value
 
 
+type alias UpdateConfig msg =
+  { clearable : Bool
+  , onChange : Maybe (Int -> msg)
+  , onHover : Maybe (Int -> msg)
+  , onLeave : Maybe msg
+  }
+
+
+defaultUpdateConfig : UpdateConfig msg
+defaultUpdateConfig =
+  { clearable = True
+  , onChange = Nothing
+  , onHover = Nothing
+  , onLeave = Nothing
+  }
+
+
 type Msg
   = MouseOver Int
   | MouseOut
   | Clicked Int
 
 
-update : Bool -> Maybe (Int -> msg) -> Maybe (Int -> msg) -> Maybe msg -> Msg -> State -> (State, Maybe msg)
-update clearable onChange onHover onLeave msg state =
+update : Msg -> State -> (State, Maybe msg)
+update =
+  updateCustom defaultUpdateConfig
+
+
+updateCustom : UpdateConfig msg -> Msg -> State -> (State, Maybe msg)
+updateCustom config msg state =
   case msg of
     MouseOver transientValue ->
       let
@@ -44,19 +69,19 @@ update clearable onChange onHover onLeave msg state =
               Transient fixedValue transientValue
       in
         ( newState
-        , maybeApply onHover transientValue
+        , maybeApply config.onHover transientValue
         )
 
     MouseOut ->
       case state of
         Fixed _ ->
           ( state
-          , onLeave
+          , config.onLeave
           )
 
         Transient fixedValue _ ->
           ( Fixed fixedValue
-          , onLeave
+          , config.onLeave
           )
 
     Clicked newFixedValue ->
@@ -70,9 +95,9 @@ update clearable onChange onHover onLeave msg state =
               fixedValue
       in
         if newFixedValue == currentFixedValue then
-          if clearable then
+          if config.clearable then
             ( Fixed 0
-            , maybeApply onChange 0
+            , maybeApply config.onChange 0
             )
           else
             ( state
@@ -80,7 +105,7 @@ update clearable onChange onHover onLeave msg state =
             )
         else
           ( Fixed newFixedValue
-          , maybeApply onChange newFixedValue
+          , maybeApply config.onChange newFixedValue
           )
 
 

@@ -3,7 +3,7 @@ module Main exposing (main)
 import Browser
 import Html exposing (Html, div, h1, h2, p, text)
 
-import Rater
+import Rater exposing (defaultUpdateConfig)
 
 
 main : Program () Model Msg
@@ -71,31 +71,34 @@ update msg model =
       { model
       | rater1 =
           Tuple.first <|
-            Rater.update True Nothing Nothing Nothing raterMsg model.rater1
+            Rater.update raterMsg model.rater1
       }
 
     NewRaterMsg2 raterMsg ->
       { model
       | rater2 =
           Tuple.first <|
-            Rater.update True Nothing Nothing Nothing raterMsg model.rater2
+            Rater.update raterMsg model.rater2
       }
 
     NewRaterMsg3 raterMsg ->
       { model
       | rater3 =
           Tuple.first <|
-            Rater.update False Nothing Nothing Nothing raterMsg model.rater3
+            Rater.updateCustom
+              { defaultUpdateConfig | clearable = False }
+              raterMsg
+              model.rater3
       }
 
     NewRaterMsg4 raterMsg ->
       let
         (newState, maybeMsg) =
-          Rater.update
-            True
-            Nothing
-            (Just HoveredOverRater4)
-            (Just LeftRater4)
+          Rater.updateCustom
+            { defaultUpdateConfig
+            | onHover = Just HoveredOverRater4
+            , onLeave = Just LeftRater4
+            }
             raterMsg
             model.rater4
 
@@ -112,11 +115,8 @@ update msg model =
     NewRaterMsg6 raterMsg ->
       let
         (newState, maybeMsg) =
-          Rater.update
-            True
-            (Just ChangedRater6)
-            Nothing
-            Nothing
+          Rater.updateCustom
+            { defaultUpdateConfig | onChange = Just ChangedRater6 }
             raterMsg
             model.rater6
 
