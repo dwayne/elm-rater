@@ -30,8 +30,8 @@ type Msg
   | Clicked Int
 
 
-update : Bool -> Maybe (Int -> msg) -> Maybe msg -> Msg -> State -> (State, Maybe msg)
-update clearable onHover onLeave msg state =
+update : Bool -> Maybe (Int -> msg) -> Maybe (Int -> msg) -> Maybe msg -> Msg -> State -> (State, Maybe msg)
+update clearable onChange onHover onLeave msg state =
   case msg of
     MouseOver transientValue ->
       let
@@ -69,13 +69,18 @@ update clearable onHover onLeave msg state =
             Transient fixedValue _ ->
               fixedValue
       in
-        if clearable && newFixedValue == currentFixedValue then
-          ( Fixed 0
-          , Nothing
-          )
+        if newFixedValue == currentFixedValue then
+          if clearable then
+            ( Fixed 0
+            , maybeApply onChange 0
+            )
+          else
+            ( state
+            , Nothing
+            )
         else
           ( Fixed newFixedValue
-          , Nothing
+          , maybeApply onChange newFixedValue
           )
 
 

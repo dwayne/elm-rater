@@ -27,6 +27,9 @@ type alias Model =
   , rater4TransientRating : Maybe Int
 
   , rater5 : Rater.State
+
+  , rater6 : Rater.State
+  , rater6Rating : Int
   }
 
 
@@ -40,6 +43,9 @@ init =
   , rater4TransientRating = Nothing
 
   , rater5 = Rater.initial 3
+
+  , rater6 = Rater.initial 0
+  , rater6Rating = 0
   }
 
 
@@ -51,8 +57,10 @@ type Msg
   | NewRaterMsg2 Rater.Msg
   | NewRaterMsg3 Rater.Msg
   | NewRaterMsg4 Rater.Msg
+  | NewRaterMsg6 Rater.Msg
   | HoveredOverRater4 Int
   | LeftRater4
+  | ChangedRater6 Int
   | NoOp
 
 
@@ -63,21 +71,21 @@ update msg model =
       { model
       | rater1 =
           Tuple.first <|
-            Rater.update True Nothing Nothing raterMsg model.rater1
+            Rater.update True Nothing Nothing Nothing raterMsg model.rater1
       }
 
     NewRaterMsg2 raterMsg ->
       { model
       | rater2 =
           Tuple.first <|
-            Rater.update True Nothing Nothing raterMsg model.rater2
+            Rater.update True Nothing Nothing Nothing raterMsg model.rater2
       }
 
     NewRaterMsg3 raterMsg ->
       { model
       | rater3 =
           Tuple.first <|
-            Rater.update False Nothing Nothing raterMsg model.rater3
+            Rater.update False Nothing Nothing Nothing raterMsg model.rater3
       }
 
     NewRaterMsg4 raterMsg ->
@@ -85,6 +93,7 @@ update msg model =
         (newState, maybeMsg) =
           Rater.update
             True
+            Nothing
             (Just HoveredOverRater4)
             (Just LeftRater4)
             raterMsg
@@ -100,11 +109,35 @@ update msg model =
           Just newMsg ->
             update newMsg newModel
 
+    NewRaterMsg6 raterMsg ->
+      let
+        (newState, maybeMsg) =
+          Rater.update
+            True
+            (Just ChangedRater6)
+            Nothing
+            Nothing
+            raterMsg
+            model.rater6
+
+        newModel =
+          { model | rater6 = newState }
+      in
+        case maybeMsg of
+          Nothing ->
+            newModel
+
+          Just newMsg ->
+            update newMsg newModel
+
     HoveredOverRater4 transientRating ->
       { model | rater4TransientRating = Just transientRating }
 
     LeftRater4 ->
       { model | rater4TransientRating = Nothing }
+
+    ChangedRater6 newRating ->
+      { model | rater6Rating = newRating }
 
     NoOp ->
       model
@@ -114,7 +147,7 @@ update msg model =
 
 
 view : Model -> Html Msg
-view { rater1, rater2, rater3, rater4, rater4TransientRating, rater5 } =
+view { rater1, rater2, rater3, rater4, rater4TransientRating, rater5, rater6, rater6Rating } =
   div []
     [ h1 [] [ text "Elm Rater Examples" ]
 
@@ -151,4 +184,14 @@ view { rater1, rater2, rater3, rater4, rater4TransientRating, rater5 } =
 
     , h2 [] [ text "Disabled" ]
     , Html.map (always NoOp) (Rater.view 5 Rater.Disabled rater5)
+
+    , h2 [] [ text "Customize onChange" ]
+    , p []
+        [ text <|
+            if rater6Rating == 0 then
+              "Rate me."
+            else
+              "You selected: " ++ String.fromInt rater6Rating
+        ]
+    , Html.map NewRaterMsg6 (Rater.view 10 Rater.Enabled rater6)
     ]
