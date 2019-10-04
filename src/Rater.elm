@@ -29,24 +29,34 @@ type Msg
   | Clicked Int
 
 
-update : Bool -> Msg -> State -> State
-update clearable msg state =
+update : Bool -> Maybe (Int -> msg) -> Msg -> State -> (State, Maybe msg)
+update clearable onHover msg state =
   case msg of
     MouseOver transientValue ->
-      case state of
-        Fixed fixedValue ->
-          Transient fixedValue transientValue
+      let
+        newState =
+          case state of
+            Fixed fixedValue ->
+              Transient fixedValue transientValue
 
-        Transient fixedValue _ ->
-          Transient fixedValue transientValue
+            Transient fixedValue _ ->
+              Transient fixedValue transientValue
+      in
+        ( newState
+        , maybeApply onHover transientValue
+        )
 
     MouseOut ->
       case state of
         Fixed _ ->
-          state
+          ( state
+          , Nothing
+          )
 
         Transient fixedValue _ ->
-          Fixed fixedValue
+          ( Fixed fixedValue
+          , Nothing
+          )
 
     Clicked newFixedValue ->
       let
@@ -59,9 +69,13 @@ update clearable msg state =
               fixedValue
       in
         if clearable && newFixedValue == currentFixedValue then
-          Fixed 0
+          ( Fixed 0
+          , Nothing
+          )
         else
-          Fixed newFixedValue
+          ( Fixed newFixedValue
+          , Nothing
+          )
 
 
 view : Int -> State -> Html Msg
@@ -111,3 +125,16 @@ selected =
 unselected : Html msg
 unselected =
   text "\u{2606}"
+
+
+-- HELPERS
+
+
+maybeApply : Maybe (a -> b) -> a -> Maybe b
+maybeApply maybeF x =
+  case maybeF of
+    Nothing ->
+      Nothing
+
+    Just f ->
+      Just (f x)
