@@ -19,12 +19,17 @@ main =
 
 
 type alias Model =
-  { rating : Int }
+  { rater : Rater }
+
+
+type Rater
+  = Fixed Int
+  | Transient Int Int
 
 
 init : Model
 init =
-  { rating = 3 }
+  { rater = Fixed 3 }
 
 
 -- UPDATE
@@ -37,16 +42,30 @@ type Msg
 update : Msg -> Model -> Model
 update msg model =
   case msg of
-    MouseOver value ->
-      { model | rating = value }
+    MouseOver transientValue ->
+      case model.rater of
+        Fixed fixedValue ->
+          { model | rater = Transient fixedValue transientValue }
+
+        Transient fixedValue _ ->
+          { model | rater = Transient fixedValue transientValue }
 
 
 -- VIEW
 
 
 view : Model -> Html Msg
-view { rating } =
-  viewRater 5 rating
+view { rater } =
+  let
+    rating =
+      case rater of
+        Fixed fixedValue ->
+          fixedValue
+
+        Transient _ transientValue ->
+          transientValue
+  in
+    viewRater 5 rating
 
 
 viewRater : Int -> Int -> Html Msg
