@@ -44,19 +44,13 @@ view { rating } =
 viewRater : Int -> Int -> Html msg
 viewRater total rating =
   div [ class "rater" ]
-    (viewSelectedStars 1 rating ++ viewUnselectedStars (rating + 1) total)
+    (viewStars 1 rating selected ++ viewStars (rating + 1) total unselected)
 
 
-viewSelectedStars : Int -> Int -> List (Html msg)
-viewSelectedStars low high =
+viewStars : Int -> Int -> Html msg -> List (Html msg)
+viewStars low high star =
   List.range low high
-    |> List.map (always (viewStar selected))
-
-
-viewUnselectedStars : Int -> Int -> List (Html msg)
-viewUnselectedStars low high =
-  List.range low high
-    |> List.map (always (viewStar unselected))
+    |> List.map (always (viewStar star))
 
 
 viewStar : Html msg -> Html msg
