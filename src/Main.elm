@@ -61,7 +61,19 @@ update msg model =
           { model | rater = Fixed fixedValue }
 
     Clicked newFixedValue ->
-      { model | rater = Fixed newFixedValue }
+      let
+        currentFixedValue =
+          case model.rater of
+            Fixed fixedValue ->
+              fixedValue
+
+            Transient fixedValue _ ->
+              fixedValue
+      in
+        if newFixedValue == currentFixedValue then
+          { model | rater = Fixed 0 }
+        else
+          { model | rater = Fixed newFixedValue }
 
 
 -- VIEW
