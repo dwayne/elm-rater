@@ -5,6 +5,7 @@ module Rater exposing
   , Msg
   , update
 
+  , Mode(..)
   , view
   )
 
@@ -78,8 +79,14 @@ update clearable onHover onLeave msg state =
           )
 
 
-view : Int -> Bool -> State -> Html Msg
-view total readOnly state =
+type Mode
+  = Enabled
+  | ReadOnly
+  | Disabled
+
+
+view : Int -> Mode -> State -> Html Msg
+view total mode state =
   let
     rating =
       case state of
@@ -89,10 +96,15 @@ view total readOnly state =
         Transient _ transientValue ->
           transientValue
   in
-    if readOnly then
-      viewReadOnlyRater total rating
-    else
-      viewRater total rating
+    case mode of
+      Enabled ->
+        viewRater total rating
+
+      ReadOnly ->
+        viewReadOnlyRater total rating
+
+      Disabled ->
+        viewDisabledRater total rating
 
 
 viewReadOnlyRater : Int -> Int -> Html msg
@@ -103,6 +115,17 @@ viewReadOnlyRater total rating =
 
 viewReadOnlyStar : Html msg -> Int -> Html msg
 viewReadOnlyStar star n =
+  div [ class "rater__star" ] [ star ]
+
+
+viewDisabledRater : Int -> Int -> Html msg
+viewDisabledRater total rating =
+  div [ class "rater is-disabled" ]
+    (viewStars 1 rating (viewDisabledStar selected) ++ viewStars (rating + 1) total (viewDisabledStar unselected))
+
+
+viewDisabledStar : Html msg -> Int -> Html msg
+viewDisabledStar star n =
   div [ class "rater__star" ] [ star ]
 
 

@@ -119,10 +119,10 @@ view { rater1, rater2, rater3, rater4, rater4TransientRating, rater5 } =
     [ h1 [] [ text "Elm Rater Examples" ]
 
     , h2 [] [ text "A 5 star rater" ]
-    , Html.map NewRaterMsg1 (Rater.view 5 False rater1)
+    , Html.map NewRaterMsg1 (Rater.view 5 Rater.Enabled rater1)
 
     , h2 [] [ text "You can have any number of stars, for e.g. 25" ]
-    , Html.map NewRaterMsg2 (Rater.view 25 False rater2)
+    , Html.map NewRaterMsg2 (Rater.view 25 Rater.Enabled rater2)
 
     , h2 [] [ text "You can disable clearing" ]
     , p []
@@ -132,7 +132,7 @@ view { rater1, rater2, rater3, rater4, rater4TransientRating, rater5 } =
             , "clearing has been disabled."
             ]
         ]
-    , Html.map NewRaterMsg3 (Rater.view 5 False rater3)
+    , Html.map NewRaterMsg3 (Rater.view 5 Rater.Enabled rater3)
 
     , h2 [] [ text "Customize onHover and onLeave" ]
     , p []
@@ -144,8 +144,11 @@ view { rater1, rater2, rater3, rater4, rater4TransientRating, rater5 } =
               Just transientRating ->
                 "You are currently over: " ++ String.fromInt transientRating
         ]
-    , Html.map NewRaterMsg4 (Rater.view 5 False rater4)
+    , Html.map NewRaterMsg4 (Rater.view 5 Rater.Enabled rater4)
 
     , h2 [] [ text "Read only" ]
-    , Html.map (always NoOp) (Rater.view 5 True rater5)
+    , Html.map (always NoOp) (Rater.view 5 Rater.ReadOnly rater5)
+
+    , h2 [] [ text "Disabled" ]
+    , Html.map (always NoOp) (Rater.view 5 Rater.Disabled rater5)
     ]
