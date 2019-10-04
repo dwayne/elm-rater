@@ -9,7 +9,11 @@ module Rater exposing
   , update, updateCustom
 
   , Mode(..)
-  , view
+
+  , ViewConfig
+  , defaultViewConfig
+
+  , view, viewCustom
   )
 
 import Html exposing (Html, div, text)
@@ -115,8 +119,26 @@ type Mode
   | Disabled
 
 
-view : Int -> Mode -> State -> Html Msg
-view total mode state =
+type alias ViewConfig =
+  { total : Int
+  , mode : Mode
+  }
+
+
+defaultViewConfig : ViewConfig
+defaultViewConfig =
+  { total = 5
+  , mode = Enabled
+  }
+
+
+view : State -> Html Msg
+view =
+  viewCustom defaultViewConfig
+
+
+viewCustom : ViewConfig -> State -> Html Msg
+viewCustom config state =
   let
     rating =
       case state of
@@ -126,15 +148,15 @@ view total mode state =
         Transient _ transientValue ->
           transientValue
   in
-    case mode of
+    case config.mode of
       Enabled ->
-        viewRater total rating
+        viewRater config.total rating
 
       ReadOnly ->
-        viewReadOnlyRater total rating
+        viewReadOnlyRater config.total rating
 
       Disabled ->
-        viewDisabledRater total rating
+        viewDisabledRater config.total rating
 
 
 viewReadOnlyRater : Int -> Int -> Html msg

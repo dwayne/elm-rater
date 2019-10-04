@@ -3,7 +3,7 @@ module Main exposing (main)
 import Browser
 import Html exposing (Html, div, h1, h2, p, text)
 
-import Rater exposing (defaultUpdateConfig)
+import Rater exposing (defaultUpdateConfig, defaultViewConfig)
 
 
 main : Program () Model Msg
@@ -152,10 +152,12 @@ view { rater1, rater2, rater3, rater4, rater4TransientRating, rater5, rater6, ra
     [ h1 [] [ text "Elm Rater Examples" ]
 
     , h2 [] [ text "A 5 star rater" ]
-    , Html.map NewRaterMsg1 (Rater.view 5 Rater.Enabled rater1)
+    , Html.map NewRaterMsg1 (Rater.view rater1)
 
     , h2 [] [ text "You can have any number of stars, for e.g. 25" ]
-    , Html.map NewRaterMsg2 (Rater.view 25 Rater.Enabled rater2)
+    , Html.map
+        NewRaterMsg2
+        (Rater.viewCustom { defaultViewConfig | total = 25 } rater2)
 
     , h2 [] [ text "You can disable clearing" ]
     , p []
@@ -165,7 +167,7 @@ view { rater1, rater2, rater3, rater4, rater4TransientRating, rater5, rater6, ra
             , "clearing has been disabled."
             ]
         ]
-    , Html.map NewRaterMsg3 (Rater.view 5 Rater.Enabled rater3)
+    , Html.map NewRaterMsg3 (Rater.view rater3)
 
     , h2 [] [ text "Customize onHover and onLeave" ]
     , p []
@@ -177,13 +179,17 @@ view { rater1, rater2, rater3, rater4, rater4TransientRating, rater5, rater6, ra
               Just transientRating ->
                 "You are currently over: " ++ String.fromInt transientRating
         ]
-    , Html.map NewRaterMsg4 (Rater.view 5 Rater.Enabled rater4)
+    , Html.map NewRaterMsg4 (Rater.view rater4)
 
     , h2 [] [ text "Read only" ]
-    , Html.map (always NoOp) (Rater.view 5 Rater.ReadOnly rater5)
+    , Html.map
+        (always NoOp)
+        (Rater.viewCustom { defaultViewConfig | mode = Rater.ReadOnly } rater5)
 
     , h2 [] [ text "Disabled" ]
-    , Html.map (always NoOp) (Rater.view 5 Rater.Disabled rater5)
+    , Html.map
+        (always NoOp)
+        (Rater.viewCustom { defaultViewConfig | mode = Rater.Disabled } rater5)
 
     , h2 [] [ text "Customize onChange" ]
     , p []
@@ -193,5 +199,7 @@ view { rater1, rater2, rater3, rater4, rater4TransientRating, rater5, rater6, ra
             else
               "You selected: " ++ String.fromInt rater6Rating
         ]
-    , Html.map NewRaterMsg6 (Rater.view 10 Rater.Enabled rater6)
+    , Html.map
+        NewRaterMsg6
+        (Rater.viewCustom { defaultViewConfig | total = 10 } rater6)
     ]
