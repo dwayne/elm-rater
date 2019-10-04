@@ -38,6 +38,7 @@ init =
 type Msg
   = MouseOver Int
   | MouseOut
+  | Clicked Int
 
 
 update : Msg -> Model -> Model
@@ -58,6 +59,9 @@ update msg model =
 
         Transient fixedValue _ ->
           { model | rater = Fixed fixedValue }
+
+    Clicked newFixedValue ->
+      { model | rater = Fixed newFixedValue }
 
 
 -- VIEW
@@ -97,6 +101,7 @@ viewStar star value =
   div
     [ class "rater__star"
     , Events.onMouseOver (MouseOver value)
+    , Events.onClick (Clicked value)
     ]
     [ star ]
 
