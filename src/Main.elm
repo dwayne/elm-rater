@@ -37,6 +37,7 @@ init =
 
 type Msg
   = MouseOver Int
+  | MouseOut
 
 
 update : Msg -> Model -> Model
@@ -49,6 +50,14 @@ update msg model =
 
         Transient fixedValue _ ->
           { model | rater = Transient fixedValue transientValue }
+
+    MouseOut ->
+      case model.rater of
+        Fixed _ ->
+          model
+
+        Transient fixedValue _ ->
+          { model | rater = Fixed fixedValue }
 
 
 -- VIEW
@@ -70,7 +79,10 @@ view { rater } =
 
 viewRater : Int -> Int -> Html Msg
 viewRater total rating =
-  div [ class "rater" ]
+  div
+    [ class "rater"
+    , Events.onMouseOut MouseOut
+    ]
     (viewStars 1 rating selected ++ viewStars (rating + 1) total unselected)
 
 
