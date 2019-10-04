@@ -48,6 +48,7 @@ type Msg
   | NewRaterMsg3 Rater.Msg
   | NewRaterMsg4 Rater.Msg
   | HoveredOverRater4 Int
+  | LeftRater4
 
 
 update : Msg -> Model -> Model
@@ -56,19 +57,22 @@ update msg model =
     NewRaterMsg1 raterMsg ->
       { model
       | rater1 =
-          Tuple.first <| Rater.update True Nothing raterMsg model.rater1
+          Tuple.first <|
+            Rater.update True Nothing Nothing raterMsg model.rater1
       }
 
     NewRaterMsg2 raterMsg ->
       { model
       | rater2 =
-          Tuple.first <| Rater.update True Nothing raterMsg model.rater2
+          Tuple.first <|
+            Rater.update True Nothing Nothing raterMsg model.rater2
       }
 
     NewRaterMsg3 raterMsg ->
       { model
       | rater3 =
-          Tuple.first <| Rater.update False Nothing raterMsg model.rater3
+          Tuple.first <|
+            Rater.update False Nothing Nothing raterMsg model.rater3
       }
 
     NewRaterMsg4 raterMsg ->
@@ -77,6 +81,7 @@ update msg model =
           Rater.update
             True
             (Just HoveredOverRater4)
+            (Just LeftRater4)
             raterMsg
             model.rater4
 
@@ -92,6 +97,9 @@ update msg model =
 
     HoveredOverRater4 transientRating ->
       { model | rater4TransientRating = Just transientRating }
+
+    LeftRater4 ->
+      { model | rater4TransientRating = Nothing }
 
 
 -- VIEW
@@ -118,7 +126,7 @@ view { rater1, rater2, rater3, rater4, rater4TransientRating } =
         ]
     , Html.map NewRaterMsg3 (Rater.view 5 rater3)
 
-    , h2 [] [ text "Customize onHover" ]
+    , h2 [] [ text "Customize onHover and onLeave" ]
     , p []
         [ text <|
             case rater4TransientRating of
