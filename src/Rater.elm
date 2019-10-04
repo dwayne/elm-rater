@@ -29,8 +29,8 @@ type Msg
   | Clicked Int
 
 
-update : Msg -> State -> State
-update msg state =
+update : Bool -> Msg -> State -> State
+update clearable msg state =
   case msg of
     MouseOver transientValue ->
       case state of
@@ -58,7 +58,7 @@ update msg state =
             Transient fixedValue _ ->
               fixedValue
       in
-        if newFixedValue == currentFixedValue then
+        if clearable && newFixedValue == currentFixedValue then
           Fixed 0
         else
           Fixed newFixedValue
