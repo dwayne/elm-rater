@@ -134,30 +134,29 @@ view =
 
 viewCustom : ViewConfig -> Int -> State -> Html Msg
 viewCustom config rating state =
-  -- FIXME: Check total.
-  -- total >= 1
-
-  -- FIXME: Check rating.
-  -- 0 <= rating <= total
+  -- IDEA: How about a Rating type?
 
   let
+    checkedConfig =
+      { config | total = max 1 config.total }
+
     ratingToUse =
       case state of
         Fixed ->
-          rating
+          min checkedConfig.total (max 0 rating)
 
         Transient transientRating ->
           transientRating
   in
-    case config.mode of
+    case checkedConfig.mode of
       Enabled ->
-        viewRater config ratingToUse
+        viewRater checkedConfig ratingToUse
 
       ReadOnly ->
-        mapNeverToMsg (viewReadOnlyRater config ratingToUse)
+        mapNeverToMsg (viewReadOnlyRater checkedConfig ratingToUse)
 
       Disabled ->
-        mapNeverToMsg (viewDisabledRater config ratingToUse)
+        mapNeverToMsg (viewDisabledRater checkedConfig ratingToUse)
 
 
 viewReadOnlyRater : ViewConfig -> Int -> Html Never

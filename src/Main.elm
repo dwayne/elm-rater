@@ -87,10 +87,7 @@ update msg model =
           model
 
         Just newRating ->
-          if newRating >= 0 && newRating <= 5 then
-            { model | rating = newRating }
-          else
-            model
+          { model | rating = newRating }
 
 
 -- VIEW
