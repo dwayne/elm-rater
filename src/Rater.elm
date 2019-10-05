@@ -16,8 +16,8 @@ module Rater exposing
   , view, viewCustom
   )
 
-import Html exposing (Html, div, text)
-import Html.Attributes exposing (class)
+import Html exposing (Html, div, span, text)
+import Html.Attributes exposing (class, style)
 import Html.Events as Events
 
 
@@ -52,6 +52,7 @@ type Msg
   = MouseOver Int
   | MouseOut
   | Clicked Int
+  | NoOp
 
 
 update : Msg -> State -> (State, Maybe msg)
@@ -112,6 +113,11 @@ updateCustom config msg state =
           , maybeApply config.onChange newFixedValue
           )
 
+    NoOp ->
+      ( state
+      , Nothing
+      )
+
 
 type Mode
   = Enabled
@@ -122,6 +128,8 @@ type Mode
 type alias ViewConfig =
   { total : Int
   , mode : Mode
+  , selected : Int -> Html Never
+  , unselected : Int -> Html Never
   }
 
 
@@ -129,6 +137,20 @@ defaultViewConfig : ViewConfig
 defaultViewConfig =
   { total = 5
   , mode = Enabled
+  , selected =
+      \_ ->
+        span
+          [ style "font-size" "48px"
+          , style "color" "orange"
+          ]
+          [ text "\u{2605}" ]
+  , unselected =
+      \_ ->
+        span
+          [ style "font-size" "48px"
+          , style "color" "orange"
+          ]
+          [ text "\u{2606}" ]
   }
 
 
@@ -150,39 +172,39 @@ viewCustom config state =
   in
     case config.mode of
       Enabled ->
-        viewRater config.total rating
+        viewRater config rating
 
       ReadOnly ->
-        viewReadOnlyRater config.total rating
+        mapNeverToMsg (viewReadOnlyRater config rating)
 
       Disabled ->
-        viewDisabledRater config.total rating
+        mapNeverToMsg (viewDisabledRater config rating)
 
 
-viewReadOnlyRater : Int -> Int -> Html msg
-viewReadOnlyRater total rating =
+viewReadOnlyRater : ViewConfig -> Int -> Html Never
+viewReadOnlyRater { total, selected, unselected } rating =
   div [ class "rater is-read-only" ]
     (viewStars 1 rating (viewReadOnlyStar selected) ++ viewStars (rating + 1) total (viewReadOnlyStar unselected))
 
 
-viewReadOnlyStar : Html msg -> Int -> Html msg
-viewReadOnlyStar star n =
-  div [ class "rater__star" ] [ star ]
+viewReadOnlyStar : (Int -> Html msg) -> Int -> Html msg
+viewReadOnlyStar star value =
+  div [ class "rater__star-wrapper" ] [ star value ]
 
 
-viewDisabledRater : Int -> Int -> Html msg
-viewDisabledRater total rating =
+viewDisabledRater : ViewConfig -> Int -> Html Never
+viewDisabledRater { total, selected, unselected } rating =
   div [ class "rater is-disabled" ]
     (viewStars 1 rating (viewDisabledStar selected) ++ viewStars (rating + 1) total (viewDisabledStar unselected))
 
 
-viewDisabledStar : Html msg -> Int -> Html msg
-viewDisabledStar star n =
-  div [ class "rater__star" ] [ star ]
+viewDisabledStar : (Int -> Html msg) -> Int -> Html msg
+viewDisabledStar star value =
+  div [ class "rater__star-wrapper" ] [ star value ]
 
 
-viewRater : Int -> Int -> Html Msg
-viewRater total rating =
+viewRater : ViewConfig -> Int -> Html Msg
+viewRater { total, selected, unselected } rating =
   div
     [ class "rater"
     , Events.onMouseOut MouseOut
@@ -190,14 +212,14 @@ viewRater total rating =
     (viewStars 1 rating (viewStar selected) ++ viewStars (rating + 1) total (viewStar unselected))
 
 
-viewStar : Html Msg -> Int -> Html Msg
+viewStar : (Int -> Html Never) -> Int -> Html Msg
 viewStar star value =
   div
-    [ class "rater__star"
+    [ class "rater__star-wrapper"
     , Events.onMouseOver (MouseOver value)
     , Events.onClick (Clicked value)
     ]
-    [ star ]
+    [ mapNeverToMsg (star value) ]
 
 
 viewStars : Int -> Int -> (Int -> Html msg) -> List (Html msg)
@@ -206,17 +228,12 @@ viewStars low high starBuilder =
     |> List.map starBuilder
 
 
-selected : Html msg
-selected =
-  text "\u{2605}"
-
-
-unselected : Html msg
-unselected =
-  text "\u{2606}"
-
-
 -- HELPERS
+
+
+mapNeverToMsg : Html Never -> Html Msg
+mapNeverToMsg =
+  Html.map (always NoOp)
 
 
 maybeApply : Maybe (a -> b) -> a -> Maybe b

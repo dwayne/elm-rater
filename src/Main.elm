@@ -1,7 +1,8 @@
 module Main exposing (main)
 
 import Browser
-import Html exposing (Html, div, h1, h2, p, text)
+import Html exposing (Html, div, h1, h2, p, span, text)
+import Html.Attributes as Attributes
 
 import Rater exposing (defaultUpdateConfig, defaultViewConfig)
 
@@ -30,6 +31,8 @@ type alias Model =
 
   , rater6 : Rater.State
   , rater6Rating : Int
+
+  , rater7 : Rater.State
   }
 
 
@@ -46,6 +49,8 @@ init =
 
   , rater6 = Rater.initial 0
   , rater6Rating = 0
+
+  , rater7 = Rater.initial 1
   }
 
 
@@ -58,6 +63,7 @@ type Msg
   | NewRaterMsg3 Rater.Msg
   | NewRaterMsg4 Rater.Msg
   | NewRaterMsg6 Rater.Msg
+  | NewRaterMsg7 Rater.Msg
   | HoveredOverRater4 Int
   | LeftRater4
   | ChangedRater6 Int
@@ -130,6 +136,13 @@ update msg model =
           Just newMsg ->
             update newMsg newModel
 
+    NewRaterMsg7 raterMsg ->
+      { model
+      | rater7 =
+          Tuple.first <|
+            Rater.update raterMsg model.rater7
+      }
+
     HoveredOverRater4 transientRating ->
       { model | rater4TransientRating = Just transientRating }
 
@@ -147,7 +160,7 @@ update msg model =
 
 
 view : Model -> Html Msg
-view { rater1, rater2, rater3, rater4, rater4TransientRating, rater5, rater6, rater6Rating } =
+view { rater1, rater2, rater3, rater4, rater4TransientRating, rater5, rater6, rater6Rating, rater7 } =
   div []
     [ h1 [] [ text "Elm Rater Examples" ]
 
@@ -202,4 +215,40 @@ view { rater1, rater2, rater3, rater4, rater4TransientRating, rater5, rater6, ra
     , Html.map
         NewRaterMsg6
         (Rater.viewCustom { defaultViewConfig | total = 10 } rater6)
+
+    , h2 [] [ text "Beyond stars, customize the HTML" ]
+    , p []
+        [ Html.map NewRaterMsg7 <|
+            Rater.viewCustom
+              { defaultViewConfig
+              | selected = text << String.fromInt
+              , unselected = always (text "_")
+              }
+              rater7
+        ]
+    , p []
+        [ Html.map NewRaterMsg7 <|
+            Rater.viewCustom
+              { defaultViewConfig
+              | selected = (
+                  \n ->
+                    span
+                      [ Attributes.style "font-size" "32px"
+                      , Attributes.style "color" "red"
+                      , Attributes.title (String.fromInt n)
+                      ]
+                      [ text "\u{2764}" ]
+                )
+              , unselected = (
+                  \n ->
+                    span
+                      [ Attributes.style "font-size" "32px"
+                      , Attributes.style "color" "black"
+                      , Attributes.title (String.fromInt n)
+                      ]
+                      [ text "\u{2764}" ]
+                )
+              }
+              rater7
+        ]
     ]
