@@ -134,6 +134,12 @@ view =
 
 viewCustom : ViewConfig -> Int -> State -> Html Msg
 viewCustom config rating state =
+  -- FIXME: Check total.
+  -- total >= 1
+
+  -- FIXME: Check rating.
+  -- 0 <= rating <= total
+
   let
     ratingToUse =
       case state of

@@ -1,7 +1,9 @@
 module Main exposing (main)
 
 import Browser
-import Html exposing (Html, div, h1, p, text)
+import Html exposing (Html, div, h1, h2, input, p, text)
+import Html.Attributes as Attributes
+import Html.Events as Events
 
 import Rater exposing (defaultUpdateConfig)
 
@@ -41,6 +43,7 @@ type Msg
   | Changed Int
   | Hovered Int
   | Left
+  | NewInput String
 
 
 update : Msg -> Model -> Model
@@ -78,6 +81,17 @@ update msg model =
     Left ->
       { model | maybeTransientRating = Nothing }
 
+    NewInput newRatingString ->
+      case String.toInt newRatingString of
+        Nothing ->
+          model
+
+        Just newRating ->
+          if newRating >= 0 && newRating <= 5 then
+            { model | rating = newRating }
+          else
+            model
+
 
 -- VIEW
 
@@ -98,5 +112,31 @@ view { rater, rating, maybeTransientRating } =
               Just transientRating ->
                 String.fromInt transientRating
           )
+        ]
+
+    , h2 [] [ text "What does ownership get us?" ]
+    , p []
+        [ text <| String.join " "
+            [ "Since the rater doesn't own the rating"
+            , "we can control the rating in other ways."
+            ]
+        ]
+    , p []
+        [ text "For e.g. use this input field to change the rating: "
+        , input
+            [ Attributes.type_ "number"
+            , Attributes.value (String.fromInt rating)
+            , Events.onInput NewInput
+            ]
+            []
+        , text ". And watch how the rater updates itself."
+        ]
+    , p []
+        [ text <| String.join " "
+            [ "This can also be done in the case where the rater owns the"
+            , "rating but we would have to expose a setter function on the"
+            , "rater's API to update the rater's rating when another element"
+            , "on the page wants to control the rating."
+            ]
         ]
     ]
