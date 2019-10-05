@@ -22,13 +22,13 @@ import Html.Events as Events
 
 
 type State
-  = Fixed Int
-  | Transient Int Int
+  = Fixed
+  | Transient Int
 
 
-initial : Int -> State
-initial value =
-  Fixed value
+initial : State
+initial =
+  Fixed
 
 
 type alias UpdateConfig msg =
@@ -55,63 +55,36 @@ type Msg
   | NoOp
 
 
-update : Msg -> State -> (State, Maybe msg)
+update : Int -> Msg -> State -> (State, Maybe msg)
 update =
   updateCustom defaultUpdateConfig
 
 
-updateCustom : UpdateConfig msg -> Msg -> State -> (State, Maybe msg)
-updateCustom config msg state =
+updateCustom : UpdateConfig msg -> Int -> Msg -> State -> (State, Maybe msg)
+updateCustom config rating msg state =
   case msg of
-    MouseOver transientValue ->
-      let
-        newState =
-          case state of
-            Fixed fixedValue ->
-              Transient fixedValue transientValue
-
-            Transient fixedValue _ ->
-              Transient fixedValue transientValue
-      in
-        ( newState
-        , maybeApply config.onHover transientValue
-        )
+    MouseOver transientRating ->
+      ( Transient transientRating
+      , maybeApply config.onHover transientRating
+      )
 
     MouseOut ->
-      case state of
-        Fixed _ ->
-          ( state
-          , config.onLeave
-          )
+      ( Fixed
+      , config.onLeave
+      )
 
-        Transient fixedValue _ ->
-          ( Fixed fixedValue
-          , config.onLeave
-          )
-
-    Clicked newFixedValue ->
-      let
-        currentFixedValue =
-          case state of
-            Fixed fixedValue ->
-              fixedValue
-
-            Transient fixedValue _ ->
-              fixedValue
-      in
-        if newFixedValue == currentFixedValue then
-          if config.clearable then
-            ( Fixed 0
-            , maybeApply config.onChange 0
-            )
+    Clicked newRating ->
+      if newRating == rating then
+        ( Fixed
+        , if config.clearable then
+            maybeApply config.onChange 0
           else
-            ( state
-            , Nothing
-            )
-        else
-          ( Fixed newFixedValue
-          , maybeApply config.onChange newFixedValue
-          )
+            Nothing
+        )
+      else
+        ( Fixed
+        , maybeApply config.onChange newRating
+        )
 
     NoOp ->
       ( state
@@ -154,31 +127,31 @@ defaultViewConfig =
   }
 
 
-view : State -> Html Msg
+view : Int -> State -> Html Msg
 view =
   viewCustom defaultViewConfig
 
 
-viewCustom : ViewConfig -> State -> Html Msg
-viewCustom config state =
+viewCustom : ViewConfig -> Int -> State -> Html Msg
+viewCustom config rating state =
   let
-    rating =
+    ratingToUse =
       case state of
-        Fixed fixedValue ->
-          fixedValue
+        Fixed ->
+          rating
 
-        Transient _ transientValue ->
-          transientValue
+        Transient transientRating ->
+          transientRating
   in
     case config.mode of
       Enabled ->
-        viewRater config rating
+        viewRater config ratingToUse
 
       ReadOnly ->
-        mapNeverToMsg (viewReadOnlyRater config rating)
+        mapNeverToMsg (viewReadOnlyRater config ratingToUse)
 
       Disabled ->
-        mapNeverToMsg (viewDisabledRater config rating)
+        mapNeverToMsg (viewDisabledRater config ratingToUse)
 
 
 viewReadOnlyRater : ViewConfig -> Int -> Html Never
