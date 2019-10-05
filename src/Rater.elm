@@ -8,12 +8,12 @@ module Rater exposing
   , Msg
   , update, updateCustom
 
-  , Mode(..)
-
   , ViewConfig
   , defaultViewConfig
 
   , view, viewCustom
+  , viewReadOnly, viewReadOnlyCustom
+  , viewDisabled, viewDisabledCustom
   )
 
 import Html exposing (Html, div, span, text)
@@ -94,23 +94,15 @@ updateCustom config rating msg state =
       )
 
 
-type Mode
-  = Enabled
-  | ReadOnly
-  | Disabled
-
-
 type alias ViewConfig =
-  { mode : Mode
-  , selected : Int -> Html Never
+  { selected : Int -> Html Never
   , unselected : Int -> Html Never
   }
 
 
 defaultViewConfig : ViewConfig
 defaultViewConfig =
-  { mode = Enabled
-  , selected =
+  { selected =
       \_ ->
         span
           [ style "font-size" "48px"
@@ -135,9 +127,6 @@ view =
 viewCustom : ViewConfig -> Rating -> State -> Html Msg
 viewCustom config rating state =
   let
-    total =
-      Rating.total rating
-
     value =
       case state of
         Fixed ->
@@ -145,38 +134,11 @@ viewCustom config rating state =
 
         Transient transientValue ->
           transientValue
+
+    total =
+      Rating.total rating
   in
-    case config.mode of
-      Enabled ->
-        viewRater config total value
-
-      ReadOnly ->
-        mapNeverToMsg (viewReadOnlyRater config total value)
-
-      Disabled ->
-        mapNeverToMsg (viewDisabledRater config total value)
-
-
-viewReadOnlyRater : ViewConfig -> Int -> Int -> Html Never
-viewReadOnlyRater { selected, unselected } total value =
-  div [ class "rater is-read-only" ]
-    (viewStars 1 value (viewReadOnlyStar selected) ++ viewStars (value + 1) total (viewReadOnlyStar unselected))
-
-
-viewReadOnlyStar : (Int -> Html msg) -> Int -> Html msg
-viewReadOnlyStar star value =
-  div [ class "rater__star-wrapper" ] [ star value ]
-
-
-viewDisabledRater : ViewConfig -> Int -> Int -> Html Never
-viewDisabledRater { selected, unselected } total value =
-  div [ class "rater is-disabled" ]
-    (viewStars 1 value (viewDisabledStar selected) ++ viewStars (value + 1) total (viewDisabledStar unselected))
-
-
-viewDisabledStar : (Int -> Html msg) -> Int -> Html msg
-viewDisabledStar star value =
-  div [ class "rater__star-wrapper" ] [ star value ]
+    viewRater config total value
 
 
 viewRater : ViewConfig -> Int -> Int -> Html Msg
@@ -196,6 +158,52 @@ viewStar star value =
     , Events.onClick (Clicked value)
     ]
     [ mapNeverToMsg (star value) ]
+
+
+viewReadOnly : Rating -> Html Never
+viewReadOnly =
+  viewReadOnlyCustom defaultViewConfig
+
+
+viewReadOnlyCustom : ViewConfig -> Rating -> Html Never
+viewReadOnlyCustom { selected, unselected } rating =
+  let
+    value =
+      Rating.value rating
+
+    total =
+      Rating.total rating
+  in
+    div [ class "rater is-read-only" ]
+      (viewStars 1 value (viewReadOnlyStar selected) ++ viewStars (value + 1) total (viewReadOnlyStar unselected))
+
+
+viewReadOnlyStar : (Int -> Html msg) -> Int -> Html msg
+viewReadOnlyStar star value =
+  div [ class "rater__star-wrapper" ] [ star value ]
+
+
+viewDisabled : Rating -> Html Never
+viewDisabled =
+  viewDisabledCustom defaultViewConfig
+
+
+viewDisabledCustom : ViewConfig -> Rating -> Html Never
+viewDisabledCustom { selected, unselected } rating =
+  let
+    value =
+      Rating.value rating
+
+    total =
+      Rating.total rating
+  in
+    div [ class "rater is-disabled" ]
+      (viewStars 1 value (viewDisabledStar selected) ++ viewStars (value + 1) total (viewDisabledStar unselected))
+
+
+viewDisabledStar : (Int -> Html msg) -> Int -> Html msg
+viewDisabledStar star value =
+  div [ class "rater__star-wrapper" ] [ star value ]
 
 
 viewStars : Int -> Int -> (Int -> Html msg) -> List (Html msg)

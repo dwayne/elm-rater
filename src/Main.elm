@@ -1,11 +1,11 @@
 module Main exposing (main)
 
 import Browser
-import Html exposing (Html, div, h1, h2, input, p, text)
+import Html exposing (Html, div, h1, h2, input, p, span, text)
 import Html.Attributes as Attributes
 import Html.Events as Events
 
-import Rater exposing (defaultUpdateConfig)
+import Rater exposing (defaultUpdateConfig, defaultViewConfig)
 import Rating exposing (Rating)
 
 
@@ -45,6 +45,7 @@ type Msg
   | Hovered Int
   | Left
   | NewInput String
+  | NoOp
 
 
 update : Msg -> Model -> Model
@@ -89,6 +90,9 @@ update msg model =
 
         Just newValue ->
           { model | rating = Rating.change newValue model.rating }
+
+    NoOp ->
+      model
 
 
 -- VIEW
@@ -136,5 +140,32 @@ view { rater, rating, maybeTransientValue } =
             , "rater's API to update the rater's rating when another element"
             , "on the page wants to control the rating."
             ]
+        ]
+
+    , h2 [] [ text "Read only" ]
+    , p [] [ Html.map (always NoOp) (Rater.viewReadOnly (Rating.new 2 10)) ]
+    , p []
+        [ Html.map (always NoOp) <|
+            Rater.viewReadOnlyCustom
+              { defaultViewConfig
+              | selected = text << String.fromInt
+              , unselected = always (text "_")
+              }
+              (Rating.new 5 10)
+        ]
+
+    , h2 [] [ text "Disabled" ]
+    , p [] [ Html.map (always NoOp) (Rater.viewDisabled (Rating.new 7 15)) ]
+    , p []
+        [ Html.map (always NoOp) <|
+            Rater.viewDisabledCustom
+              { defaultViewConfig
+              | selected = \_ ->
+                  span
+                    [ Attributes.style "color" "red" ]
+                    [ text "\u{2764}" ]
+              , unselected = \_ -> text "\u{2764}"
+              }
+              (Rating.new 5 15)
         ]
     ]
