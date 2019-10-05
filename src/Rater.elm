@@ -20,6 +20,8 @@ import Html exposing (Html, div, span, text)
 import Html.Attributes exposing (class, style)
 import Html.Events as Events
 
+import Rating exposing (Rating)
+
 
 type State
   = Fixed
@@ -55,17 +57,17 @@ type Msg
   | NoOp
 
 
-update : Int -> Msg -> State -> (State, Maybe msg)
+update : Rating -> Msg -> State -> (State, Maybe msg)
 update =
   updateCustom defaultUpdateConfig
 
 
-updateCustom : UpdateConfig msg -> Int -> Msg -> State -> (State, Maybe msg)
+updateCustom : UpdateConfig msg -> Rating -> Msg -> State -> (State, Maybe msg)
 updateCustom config rating msg state =
   case msg of
-    MouseOver transientRating ->
-      ( Transient transientRating
-      , maybeApply config.onHover transientRating
+    MouseOver transientValue ->
+      ( Transient transientValue
+      , maybeApply config.onHover transientValue
       )
 
     MouseOut ->
@@ -73,8 +75,8 @@ updateCustom config rating msg state =
       , config.onLeave
       )
 
-    Clicked newRating ->
-      if newRating == rating then
+    Clicked newValue ->
+      if newValue == Rating.value rating then
         ( Fixed
         , if config.clearable then
             maybeApply config.onChange 0
@@ -83,7 +85,7 @@ updateCustom config rating msg state =
         )
       else
         ( Fixed
-        , maybeApply config.onChange newRating
+        , maybeApply config.onChange newValue
         )
 
     NoOp ->
@@ -99,8 +101,7 @@ type Mode
 
 
 type alias ViewConfig =
-  { total : Int
-  , mode : Mode
+  { mode : Mode
   , selected : Int -> Html Never
   , unselected : Int -> Html Never
   }
@@ -108,8 +109,7 @@ type alias ViewConfig =
 
 defaultViewConfig : ViewConfig
 defaultViewConfig =
-  { total = 5
-  , mode = Enabled
+  { mode = Enabled
   , selected =
       \_ ->
         span
@@ -127,42 +127,40 @@ defaultViewConfig =
   }
 
 
-view : Int -> State -> Html Msg
+view : Rating -> State -> Html Msg
 view =
   viewCustom defaultViewConfig
 
 
-viewCustom : ViewConfig -> Int -> State -> Html Msg
+viewCustom : ViewConfig -> Rating -> State -> Html Msg
 viewCustom config rating state =
-  -- IDEA: How about a Rating type?
-
   let
-    checkedConfig =
-      { config | total = max 1 config.total }
+    total =
+      Rating.total rating
 
-    ratingToUse =
+    value =
       case state of
         Fixed ->
-          min checkedConfig.total (max 0 rating)
+          Rating.value rating
 
-        Transient transientRating ->
-          transientRating
+        Transient transientValue ->
+          transientValue
   in
-    case checkedConfig.mode of
+    case config.mode of
       Enabled ->
-        viewRater checkedConfig ratingToUse
+        viewRater config total value
 
       ReadOnly ->
-        mapNeverToMsg (viewReadOnlyRater checkedConfig ratingToUse)
+        mapNeverToMsg (viewReadOnlyRater config total value)
 
       Disabled ->
-        mapNeverToMsg (viewDisabledRater checkedConfig ratingToUse)
+        mapNeverToMsg (viewDisabledRater config total value)
 
 
-viewReadOnlyRater : ViewConfig -> Int -> Html Never
-viewReadOnlyRater { total, selected, unselected } rating =
+viewReadOnlyRater : ViewConfig -> Int -> Int -> Html Never
+viewReadOnlyRater { selected, unselected } total value =
   div [ class "rater is-read-only" ]
-    (viewStars 1 rating (viewReadOnlyStar selected) ++ viewStars (rating + 1) total (viewReadOnlyStar unselected))
+    (viewStars 1 value (viewReadOnlyStar selected) ++ viewStars (value + 1) total (viewReadOnlyStar unselected))
 
 
 viewReadOnlyStar : (Int -> Html msg) -> Int -> Html msg
@@ -170,10 +168,10 @@ viewReadOnlyStar star value =
   div [ class "rater__star-wrapper" ] [ star value ]
 
 
-viewDisabledRater : ViewConfig -> Int -> Html Never
-viewDisabledRater { total, selected, unselected } rating =
+viewDisabledRater : ViewConfig -> Int -> Int -> Html Never
+viewDisabledRater { selected, unselected } total value =
   div [ class "rater is-disabled" ]
-    (viewStars 1 rating (viewDisabledStar selected) ++ viewStars (rating + 1) total (viewDisabledStar unselected))
+    (viewStars 1 value (viewDisabledStar selected) ++ viewStars (value + 1) total (viewDisabledStar unselected))
 
 
 viewDisabledStar : (Int -> Html msg) -> Int -> Html msg
@@ -181,13 +179,13 @@ viewDisabledStar star value =
   div [ class "rater__star-wrapper" ] [ star value ]
 
 
-viewRater : ViewConfig -> Int -> Html Msg
-viewRater { total, selected, unselected } rating =
+viewRater : ViewConfig -> Int -> Int -> Html Msg
+viewRater { selected, unselected } total value =
   div
     [ class "rater"
     , Events.onMouseOut MouseOut
     ]
-    (viewStars 1 rating (viewStar selected) ++ viewStars (rating + 1) total (viewStar unselected))
+    (viewStars 1 value (viewStar selected) ++ viewStars (value + 1) total (viewStar unselected))
 
 
 viewStar : (Int -> Html Never) -> Int -> Html Msg

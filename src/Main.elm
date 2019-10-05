@@ -6,6 +6,7 @@ import Html.Attributes as Attributes
 import Html.Events as Events
 
 import Rater exposing (defaultUpdateConfig)
+import Rating exposing (Rating)
 
 
 main : Program () Model Msg
@@ -22,16 +23,16 @@ main =
 
 type alias Model =
   { rater : Rater.State
-  , rating : Int
-  , maybeTransientRating : Maybe Int
+  , rating : Rating
+  , maybeTransientValue : Maybe Int
   }
 
 
 init : Model
 init =
   { rater = Rater.initial
-  , rating = 3
-  , maybeTransientRating = Nothing
+  , rating = Rating.new 3 5
+  , maybeTransientValue = Nothing
   }
 
 
@@ -72,42 +73,42 @@ update msg model =
           Just newMsg ->
             update newMsg newModel
 
-    Changed newRating ->
-      { model | rating = newRating }
+    Changed newValue ->
+      { model | rating = Rating.change newValue model.rating }
 
-    Hovered transientRating ->
-      { model | maybeTransientRating = Just transientRating }
+    Hovered transientValue ->
+      { model | maybeTransientValue = Just transientValue }
 
     Left ->
-      { model | maybeTransientRating = Nothing }
+      { model | maybeTransientValue = Nothing }
 
-    NewInput newRatingString ->
-      case String.toInt newRatingString of
+    NewInput newValueString ->
+      case String.toInt newValueString of
         Nothing ->
           model
 
-        Just newRating ->
-          { model | rating = newRating }
+        Just newValue ->
+          { model | rating = Rating.change newValue model.rating }
 
 
 -- VIEW
 
 
 view : Model -> Html Msg
-view { rater, rating, maybeTransientRating } =
+view { rater, rating, maybeTransientValue } =
   div []
     [ h1 [] [ text "Elm Rater Example" ]
 
     , Html.map NewRaterMsg (Rater.view rating rater)
-    , p [] [ text <| "Rating: " ++ String.fromInt rating ]
+    , p [] [ text <| "Rating: " ++ String.fromInt (Rating.value rating) ]
     , p []
         [ text <| "Transient rating: " ++ (
-            case maybeTransientRating of
+            case maybeTransientValue of
               Nothing ->
                 "-"
 
-              Just transientRating ->
-                String.fromInt transientRating
+              Just transientValue ->
+                String.fromInt transientValue
           )
         ]
 
@@ -122,7 +123,7 @@ view { rater, rating, maybeTransientRating } =
         [ text "For e.g. use this input field to change the rating: "
         , input
             [ Attributes.type_ "number"
-            , Attributes.value (String.fromInt rating)
+            , Attributes.value (String.fromInt (Rating.value rating))
             , Events.onInput NewInput
             ]
             []
