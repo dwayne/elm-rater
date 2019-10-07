@@ -168,4 +168,15 @@ view { rater, rating, maybeTransientValue } =
               }
               (Rating.new 5 15)
         ]
+
+    , h2 [] [ text "Custom styles" ]
+    , p []
+        [ Html.map (always NoOp) <|
+            Rater.viewReadOnlyCustom
+              { defaultViewConfig
+              | attrs = Just [ Attributes.class "rater" ]
+              , wrapperAttrs = Just [ Attributes.class "rater__star-wrapper" ]
+              }
+              (Rating.new 1 5)
+        ]
     ]

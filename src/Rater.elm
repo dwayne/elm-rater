@@ -11,13 +11,16 @@ module Rater exposing
   , ViewConfig
   , defaultViewConfig
 
+  , defaultAttrs, defaultReadOnlyAttrs, defaultDisabledAttrs
+  , defaultWrapperAttrs, defaultReadOnlyWrapperAttrs, defaultDisabledWrapperAttrs
+
   , view, viewCustom
   , viewReadOnly, viewReadOnlyCustom
   , viewDisabled, viewDisabledCustom
   )
 
-import Html exposing (Html, div, span, text)
-import Html.Attributes exposing (class, style)
+import Html exposing (Attribute, Html, div, span, text)
+import Html.Attributes as Attributes exposing (class, style)
 import Html.Events as Events
 
 import Rating exposing (Rating)
@@ -95,14 +98,18 @@ updateCustom config rating msg state =
 
 
 type alias ViewConfig =
-  { selected : Int -> Html Never
+  { attrs : Maybe (List (Attribute Never))
+  , wrapperAttrs : Maybe (List (Attribute Never))
+  , selected : Int -> Html Never
   , unselected : Int -> Html Never
   }
 
 
 defaultViewConfig : ViewConfig
 defaultViewConfig =
-  { selected =
+  { attrs = Nothing
+  , wrapperAttrs = Nothing
+  , selected =
       \_ ->
         span
           [ style "font-size" "48px"
@@ -117,6 +124,43 @@ defaultViewConfig =
           ]
           [ text "\u{2606}" ]
   }
+
+
+defaultAttrs : List (Attribute Never)
+defaultAttrs =
+  [ style "display" "inline-block"
+  , style "cursor" "pointer"
+  ]
+
+
+defaultReadOnlyAttrs : List (Attribute Never)
+defaultReadOnlyAttrs =
+  [ style "display" "inline-block"
+  , style "cursor" "default"
+  ]
+
+
+defaultDisabledAttrs : List (Attribute Never)
+defaultDisabledAttrs =
+  [ style "display" "inline-block"
+  , style "cursor" "default"
+  , style "opacity" "0.5"
+  ]
+
+
+defaultWrapperAttrs : List (Attribute Never)
+defaultWrapperAttrs =
+  [ style "display" "inline-block" ]
+
+
+defaultReadOnlyWrapperAttrs : List (Attribute Never)
+defaultReadOnlyWrapperAttrs =
+  defaultWrapperAttrs
+
+
+defaultDisabledWrapperAttrs : List (Attribute Never)
+defaultDisabledWrapperAttrs =
+  defaultWrapperAttrs
 
 
 view : Rating -> State -> Html Msg
@@ -142,22 +186,32 @@ viewCustom config rating state =
 
 
 viewRater : ViewConfig -> Int -> Int -> Html Msg
-viewRater { selected, unselected } total value =
-  div
-    [ class "rater"
-    , Events.onMouseOut MouseOut
-    ]
-    (viewStars 1 value (viewStar selected) ++ viewStars (value + 1) total (viewStar unselected))
+viewRater { attrs, wrapperAttrs, selected, unselected } total value =
+  let
+    attrsToUse =
+      Maybe.withDefault defaultAttrs attrs
+
+    wrapperAttrsToUse =
+      Maybe.withDefault defaultWrapperAttrs wrapperAttrs
+
+    events =
+      [ Events.onMouseOut MouseOut ]
+  in
+    div ((List.map mapAttributeNeverToMsg attrsToUse) ++ events) <|
+      viewStars 1 value (viewStar wrapperAttrsToUse selected) ++ viewStars (value + 1) total (viewStar wrapperAttrsToUse unselected)
 
 
-viewStar : (Int -> Html Never) -> Int -> Html Msg
-viewStar star value =
-  div
-    [ class "rater__star-wrapper"
-    , Events.onMouseOver (MouseOver value)
-    , Events.onClick (Clicked value)
-    ]
-    [ mapNeverToMsg (star value) ]
+viewStar : List (Attribute Never) -> (Int -> Html Never) -> Int -> Html Msg
+viewStar attrs star value =
+  let
+    events =
+      [ Events.onMouseOver (MouseOver value)
+      , Events.onClick (Clicked value)
+      ]
+  in
+    div
+      ((List.map mapAttributeNeverToMsg attrs) ++ events)
+      [ mapHtmlNeverToMsg (star value) ]
 
 
 viewReadOnly : Rating -> Html Never
@@ -166,21 +220,27 @@ viewReadOnly =
 
 
 viewReadOnlyCustom : ViewConfig -> Rating -> Html Never
-viewReadOnlyCustom { selected, unselected } rating =
+viewReadOnlyCustom { attrs, wrapperAttrs, selected, unselected } rating =
   let
+    attrsToUse =
+      Maybe.withDefault defaultReadOnlyAttrs attrs
+
+    wrapperAttrsToUse =
+      Maybe.withDefault defaultReadOnlyWrapperAttrs wrapperAttrs
+
     value =
       Rating.value rating
 
     total =
       Rating.total rating
   in
-    div [ class "rater is-read-only" ]
-      (viewStars 1 value (viewReadOnlyStar selected) ++ viewStars (value + 1) total (viewReadOnlyStar unselected))
+    div attrsToUse <|
+      viewStars 1 value (viewReadOnlyStar wrapperAttrsToUse selected) ++ viewStars (value + 1) total (viewReadOnlyStar wrapperAttrsToUse unselected)
 
 
-viewReadOnlyStar : (Int -> Html msg) -> Int -> Html msg
-viewReadOnlyStar star value =
-  div [ class "rater__star-wrapper" ] [ star value ]
+viewReadOnlyStar : List (Attribute msg) -> (Int -> Html msg) -> Int -> Html msg
+viewReadOnlyStar attrs star value =
+  div attrs [ star value ]
 
 
 viewDisabled : Rating -> Html Never
@@ -189,21 +249,27 @@ viewDisabled =
 
 
 viewDisabledCustom : ViewConfig -> Rating -> Html Never
-viewDisabledCustom { selected, unselected } rating =
+viewDisabledCustom { attrs, wrapperAttrs, selected, unselected } rating =
   let
+    attrsToUse =
+      Maybe.withDefault defaultDisabledAttrs attrs
+
+    wrapperAttrsToUse =
+      Maybe.withDefault defaultDisabledWrapperAttrs wrapperAttrs
+
     value =
       Rating.value rating
 
     total =
       Rating.total rating
   in
-    div [ class "rater is-disabled" ]
-      (viewStars 1 value (viewDisabledStar selected) ++ viewStars (value + 1) total (viewDisabledStar unselected))
+    div attrsToUse <|
+      viewStars 1 value (viewDisabledStar wrapperAttrsToUse selected) ++ viewStars (value + 1) total (viewDisabledStar wrapperAttrsToUse unselected)
 
 
-viewDisabledStar : (Int -> Html msg) -> Int -> Html msg
-viewDisabledStar star value =
-  div [ class "rater__star-wrapper" ] [ star value ]
+viewDisabledStar : List (Attribute msg) -> (Int -> Html msg) -> Int -> Html msg
+viewDisabledStar attrs star value =
+  div attrs [ star value ]
 
 
 viewStars : Int -> Int -> (Int -> Html msg) -> List (Html msg)
@@ -215,8 +281,13 @@ viewStars low high starBuilder =
 -- HELPERS
 
 
-mapNeverToMsg : Html Never -> Html Msg
-mapNeverToMsg =
+mapAttributeNeverToMsg : Attribute Never -> Attribute Msg
+mapAttributeNeverToMsg =
+  Attributes.map (always NoOp)
+
+
+mapHtmlNeverToMsg : Html Never -> Html Msg
+mapHtmlNeverToMsg =
   Html.map (always NoOp)
 
 
