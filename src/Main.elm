@@ -1,26 +1,62 @@
 module Main exposing (main)
 
+import Browser
 import Html exposing (Html, div, span, text)
 import Html.Attributes as A
 
 
-main : Html msg
+main : Program () Model msg
 main =
-  viewRater
+  Browser.sandbox
+    { init = init
+    , update = update
+    , view = view
+    }
+
+
+-- MODEL
+
+
+type alias Model =
+  { rating : Int }
+
+
+init : Model
+init =
+  { rating = 3 }
+
+
+-- UPDATE
+
+
+update : msg -> Model -> Model
+update _ = identity
 
 
 -- VIEW
 
 
-viewRater : Html msg
-viewRater =
+view : Model -> Html msg
+view { rating } =
+  viewRater rating 5
+
+
+viewRater : Int -> Int -> Html msg
+viewRater rating outOf =
   div [ A.class "rater" ]
-    [ viewStar selected
-    , viewStar selected
-    , viewStar selected
-    , viewStar unselected
-    , viewStar unselected
-    ]
+    (viewSelectedStars 1 rating ++ viewUnselectedStars (rating + 1) outOf)
+
+
+viewSelectedStars : Int -> Int -> List (Html msg)
+viewSelectedStars low high =
+  List.range low high
+    |> List.map (always (viewStar selected))
+
+
+viewUnselectedStars : Int -> Int -> List (Html msg)
+viewUnselectedStars low high =
+  List.range low high
+    |> List.map (always (viewStar unselected))
 
 
 viewStar : Html msg -> Html msg
