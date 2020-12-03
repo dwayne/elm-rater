@@ -1,42 +1,44 @@
 module Rater.Rating exposing
   ( Rating
+  , Ratio
+  , outOf5, outOf
+  , ratio
   , rate
-
-  , change
-
-  , amount, outOf
   )
 
 
 type Rating
-  = Rating Int Int
+  = Rating Ratio
 
 
-rate : Int -> Int -> Rating
-rate amt maxAmt =
+type alias Ratio =
+  { maxValue : Int
+  , value : Int
+  }
+
+
+outOf5 : Int -> Rating
+outOf5 =
+  outOf 5
+
+
+outOf : Int -> Int -> Rating
+outOf maxValue value =
   let
-    adjustedMaxAmt =
-      max 1 maxAmt
+    clampedMaxValue =
+      max 1 maxValue
+
+    clampedValue =
+      min clampedMaxValue (max 0 value)
   in
-    Rating (adjustAmount amt adjustedMaxAmt) adjustedMaxAmt
+  Rating (Ratio clampedMaxValue clampedValue)
 
 
-change : Int -> Rating -> Rating
-change amt (Rating _ maxAmt) =
-  Rating (adjustAmount amt maxAmt) maxAmt
+ratio : Rating -> Ratio
+ratio (Rating r) =
+  r
 
 
-amount : Rating -> Int
-amount (Rating amt _) = amt
-
-
-outOf : Rating -> Int
-outOf (Rating _ maxAmt) = maxAmt
-
-
--- HELPERS
-
-
-adjustAmount : Int -> Int -> Int
-adjustAmount amt maxAmt =
-  min maxAmt (max 0 amt)
+rate : Int -> Rating -> Rating
+rate value (Rating r) =
+  Rating { r | value = min r.maxValue (max 0 value) }
