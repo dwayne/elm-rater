@@ -7,8 +7,8 @@ import Html.Events as E
 import Rater.Rating as Rating exposing (Rating)
 
 
-view : (Rating -> msg) -> Rating -> Html msg
-view onChange rating =
+view : (Rating -> msg) -> Bool -> Rating -> Html msg
+view onChange clearable rating =
   let
     ratio =
       Rating.ratio rating
@@ -24,7 +24,7 @@ view onChange rating =
 
     viewSymbols =
       List.indexedMap
-        (\i -> viewSymbol onChange rating (i + 1))
+        (\i -> viewSymbol onChange clearable rating (i + 1))
         symbols
   in
   div
@@ -34,11 +34,21 @@ view onChange rating =
     viewSymbols
 
 
-viewSymbol : (Rating -> msg) -> Rating -> Int -> Html msg -> Html msg
-viewSymbol toMsg rating value symbol =
+viewSymbol : (Rating -> msg) -> Bool -> Rating -> Int -> Html msg -> Html msg
+viewSymbol toMsg clearable rating value symbol =
+  let
+    ratio =
+      Rating.ratio rating
+
+    newValue =
+      if clearable && value == ratio.value then
+        0
+      else
+        value
+  in
   div
     [ style "display" "inline-block"
-    , E.onClick (toMsg <| Rating.rate value rating)
+    , E.onClick (toMsg <| Rating.rate newValue rating)
     ]
     [ symbol ]
 
