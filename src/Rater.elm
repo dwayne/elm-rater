@@ -1,4 +1,9 @@
-module Rater exposing (State, init, view)
+module Rater exposing
+  ( State
+  , init
+  , ActiveConfig, HoverHandlers
+  , view, viewReadOnly
+  )
 
 
 import Html exposing (Html, div, span, text)
@@ -17,15 +22,36 @@ init =
   Permanent
 
 
-view
-  : (State -> Rating -> msg)
-  -> Maybe (State -> Int -> msg)
-  -> Maybe (State -> msg)
-  -> Bool
-  -> State
-  -> Rating
-  -> Html msg
-view onChange maybeOnHover maybeOnLeave clearable state rating =
+type Config msg = Config
+  { mode : Mode msg
+  }
+
+
+type Mode msg
+  = Disabled
+  | Enabled (Activity msg)
+
+
+type Activity msg
+  = ReadOnly
+  | Active (ActiveConfig msg)
+
+
+type alias ActiveConfig msg =
+  { onChange : State -> Rating -> msg
+  , hoverHandlers : Maybe (HoverHandlers msg)
+  , clearable : Bool
+  }
+
+
+type alias HoverHandlers msg =
+  { onHover : State -> Int -> msg
+  , onLeave : State -> msg
+  }
+
+
+view : ActiveConfig msg -> State -> Rating -> Html msg
+view config state rating =
   let
     currentRating =
       case state of
@@ -49,7 +75,7 @@ view onChange maybeOnHover maybeOnLeave clearable state rating =
 
     viewSymbols =
       List.indexedMap
-        (\i -> viewSymbol onChange maybeOnHover maybeOnLeave clearable state rating (i + 1))
+        (\i -> viewSymbol config state rating (i + 1))
         symbols
   in
   div
@@ -59,53 +85,70 @@ view onChange maybeOnHover maybeOnLeave clearable state rating =
     viewSymbols
 
 
-viewSymbol
-  : (State -> Rating -> msg)
-  -> Maybe (State -> Int -> msg)
-  -> Maybe (State -> msg)
-  -> Bool
-  -> State
-  -> Rating
-  -> Int
-  -> Html msg
-  -> Html msg
-viewSymbol onChange maybeOnHover maybeOnLeave clearable state rating value symbol =
+viewSymbol : ActiveConfig msg -> State -> Rating -> Int -> Html msg -> Html msg
+viewSymbol config state rating value symbol =
   let
     ratio =
       Rating.ratio rating
 
     newValue =
-      if clearable && value == ratio.value then
+      if config.clearable && value == ratio.value then
         0
       else
         value
 
     hoverAttrs =
-      case maybeOnHover of
+      case config.hoverHandlers of
         Nothing ->
           []
 
-        Just onHover ->
+        Just handlers ->
           let
             transientRating =
               Rating.outOf ratio.maxValue value
           in
-          [ E.onMouseOver (onHover (Transient transientRating) value) ]
-
-    leaveAttrs =
-      case maybeOnLeave of
-        Nothing ->
-          []
-
-        Just onLeave ->
-          [ E.onMouseOut (onLeave Permanent) ]
+          [ E.onMouseOver (handlers.onHover (Transient transientRating) value)
+          , E.onMouseOut (handlers.onLeave Permanent)
+          ]
 
     attrs =
       [ style "display" "inline-block"
-      , E.onClick (onChange Permanent <| Rating.rate newValue rating)
-      ] ++ hoverAttrs ++ leaveAttrs
+      , E.onClick (config.onChange Permanent <| Rating.rate newValue rating)
+      ] ++ hoverAttrs
   in
   div attrs [ symbol ]
+
+
+viewReadOnly : Rating -> Html msg
+viewReadOnly rating =
+  let
+    ratio =
+      Rating.ratio rating
+
+    numFull =
+      ratio.value
+
+    numEmpty =
+      ratio.maxValue - ratio.value
+
+    symbols =
+      (List.repeat numFull symbolFull) ++ (List.repeat numEmpty symbolEmpty)
+
+    viewSymbols =
+      List.map viewReadOnlySymbol symbols
+  in
+  div
+    [ style "display" "inline-block"
+    , style "cursor" "default"
+    ]
+    viewSymbols
+
+
+viewReadOnlySymbol : Html msg -> Html msg
+viewReadOnlySymbol symbol =
+  div
+    [ style "display" "inline-block" ]
+    [ symbol ]
 
 
 symbolEmpty : Html msg
