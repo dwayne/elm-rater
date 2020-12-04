@@ -1,8 +1,7 @@
 module Rater exposing
   ( State
   , init
-  , ActiveConfig, HoverHandlers
-  , view, viewReadOnly, viewDisabled
+  , view, viewHoverable, viewReadOnly, viewDisabled
   )
 
 
@@ -38,9 +37,9 @@ type Activity msg
 
 
 type alias ActiveConfig msg =
-  { onChange : State -> Rating -> msg
-  , hoverHandlers : Maybe (HoverHandlers msg)
+  { onChange : Rating -> msg
   , clearable : Bool
+  , hoverHandlers : Maybe (HoverHandlers msg)
   }
 
 
@@ -50,8 +49,29 @@ type alias HoverHandlers msg =
   }
 
 
-view : ActiveConfig msg -> State -> Rating -> Html msg
-view config state rating =
+view : (Rating -> msg) -> Bool -> Rating -> Html msg
+view onChange clearable rating =
+  viewActive (ActiveConfig onChange clearable Nothing) Permanent rating
+
+
+viewHoverable
+  : { onChange : Rating -> msg
+    , clearable : Bool
+    , onHover : State -> Int -> msg
+    , onLeave : State -> msg
+    }
+  -> State
+  -> Rating
+  -> Html msg
+viewHoverable { onChange, clearable, onHover, onLeave } state rating =
+  viewActive
+    (ActiveConfig onChange clearable (Just (HoverHandlers onHover onLeave)))
+    state
+    rating
+
+
+viewActive : ActiveConfig msg -> State -> Rating -> Html msg
+viewActive config state rating =
   let
     currentRating =
       case state of
@@ -113,7 +133,7 @@ viewSymbol config state rating value symbol =
 
     attrs =
       [ style "display" "inline-block"
-      , E.onClick (config.onChange Permanent <| Rating.rate newValue rating)
+      , E.onClick (config.onChange <| Rating.rate newValue rating)
       ] ++ hoverAttrs
   in
   div attrs [ symbol ]

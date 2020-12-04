@@ -20,13 +20,8 @@ main =
 
 
 type alias Model =
-  { rater1 : Rater.State
-  , rating1 : Rating
-
-  , rater2 : Rater.State
+  { rating1 : Rating
   , rating2 : Rating
-
-  , rater3 : Rater.State
   , rating3 : Rating
 
   , rater4 : Rater.State
@@ -42,13 +37,8 @@ type alias Model =
 
 init : Model
 init =
-  { rater1 = Rater.init
-  , rating1 = Rating.outOf5 3
-
-  , rater2 = Rater.init
+  { rating1 = Rating.outOf5 3
   , rating2 = Rating.outOf 25 20
-
-  , rater3 = Rater.init
   , rating3 = Rating.outOf5 1
 
   , rater4 = Rater.init
@@ -66,18 +56,18 @@ init =
 
 
 type Msg
-  = ChangedRating1 Rater.State Rating
+  = ChangedRating1 Rating
 
-  | ChangedRating2 Rater.State Rating
+  | ChangedRating2 Rating
 
-  | ChangedRating3 Rater.State Rating
+  | ChangedRating3 Rating
   | ClickedClear3
 
-  | ChangedRating4 Rater.State Rating
+  | ChangedRating4 Rating
   | HoveredOverRater4 Rater.State Int
   | LeftRater4 Rater.State
 
-  | ChangedRating5 Rater.State Rating
+  | ChangedRating5 Rating
   | HoveredOverRater5 Rater.State Int
   | LeftRater5 Rater.State
 
@@ -85,20 +75,20 @@ type Msg
 update : Msg -> Model -> Model
 update msg model =
   case msg of
-    ChangedRating1 state newRating ->
-      { model | rater1 = state, rating1 = newRating }
+    ChangedRating1 newRating ->
+      { model | rating1 = newRating }
 
-    ChangedRating2 state newRating ->
-      { model | rater2 = state, rating2 = newRating }
+    ChangedRating2 newRating ->
+      { model | rating2 = newRating }
 
-    ChangedRating3 state newRating ->
-      { model | rater3 = state, rating3 = newRating }
+    ChangedRating3 newRating ->
+      { model | rating3 = newRating }
 
     ClickedClear3 ->
       { model | rating3 = Rating.outOf5 0 }
 
-    ChangedRating4 state newRating ->
-      { model | rater4 = state, rating4 = newRating }
+    ChangedRating4 newRating ->
+      { model | rating4 = newRating }
 
     HoveredOverRater4 state _ ->
       { model | rater4 = state }
@@ -106,8 +96,8 @@ update msg model =
     LeftRater4 state ->
       { model | rater4 = state }
 
-    ChangedRating5 state newRating ->
-      { model | rater5 = state, rating5 = newRating }
+    ChangedRating5 newRating ->
+      { model | rating5 = newRating }
 
     HoveredOverRater5 state value ->
       { model | rater5 = state, rater5MaybeTransientValue = Just value }
@@ -125,22 +115,10 @@ view model =
     [ h1 [] [ text "Elm Rater Examples" ]
 
     , h2 [] [ text "A 5 star rater" ]
-    , Rater.view
-        { onChange = ChangedRating1
-        , hoverHandlers = Nothing
-        , clearable = True
-        }
-        model.rater1
-        model.rating1
+    , Rater.view ChangedRating1 True model.rating1
 
     , h2 [] [ text "You can have any number of stars, for e.g. 25" ]
-    , Rater.view
-        { onChange = ChangedRating2
-        , hoverHandlers = Nothing
-        , clearable = True
-        }
-        model.rater2
-        model.rating2
+    , Rater.view ChangedRating2 True model.rating2
 
     , h2 [] [ text "You can disable clearing" ]
     , p []
@@ -150,25 +128,16 @@ view model =
             , "clearing has been disabled."
             ]
         ]
-    , Rater.view
-        { onChange = ChangedRating3
-        , hoverHandlers = Nothing
-        , clearable = False
-        }
-        model.rater3
-        model.rating3
+    , Rater.view ChangedRating3 False model.rating3
     , p [] [ text "Why not clear the rating using a button instead?" ]
     , button [ E.onClick ClickedClear3 ] [ text "Clear" ]
 
     , h2 [] [ text "You can enable hovering" ]
-    , Rater.view
+    , Rater.viewHoverable
         { onChange = ChangedRating4
-        , hoverHandlers =
-            Just
-              { onHover = HoveredOverRater4
-              , onLeave = LeftRater4
-              }
         , clearable = True
+        , onHover = HoveredOverRater4
+        , onLeave = LeftRater4
         }
         model.rater4
         model.rating4
@@ -183,14 +152,11 @@ view model =
               Just transientValue ->
                 "You are currently over: " ++ String.fromInt transientValue
         ]
-    , Rater.view
+    , Rater.viewHoverable
         { onChange = ChangedRating5
-        , hoverHandlers =
-            Just
-              { onHover = HoveredOverRater5
-              , onLeave = LeftRater5
-              }
         , clearable = True
+        , onHover = HoveredOverRater5
+        , onLeave = LeftRater5
         }
         model.rater5
         model.rating5
