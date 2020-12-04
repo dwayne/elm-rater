@@ -39,6 +39,7 @@ init =
 
 type Msg
   = ChangedRating1 Rating
+  | HoveredOver1 Int
   | ChangedRating2 Rating
   | ChangedRating3 Rating
   | ClickedClear3
@@ -49,6 +50,9 @@ update msg model =
   case msg of
     ChangedRating1 newRating ->
       { model | rating1 = newRating }
+
+    HoveredOver1 _ ->
+      model
 
     ChangedRating2 newRating ->
       { model | rating2 = newRating }
@@ -69,10 +73,10 @@ view model =
     [ h1 [] [ text "Elm Rater Examples" ]
 
     , h2 [] [ text "A 5 star rater" ]
-    , Rater.view ChangedRating1 True model.rating1
+    , Rater.view ChangedRating1 (Just HoveredOver1) True model.rating1
 
     , h2 [] [ text "You can have any number of stars, for e.g. 25" ]
-    , Rater.view ChangedRating2 True model.rating2
+    , Rater.view ChangedRating2 Nothing True model.rating2
 
     , h2 [] [ text "You can disable clearing" ]
     , p []
@@ -82,7 +86,7 @@ view model =
             , "clearing has been disabled."
             ]
         ]
-    , Rater.view ChangedRating3 False model.rating3
+    , Rater.view ChangedRating3 Nothing False model.rating3
     , p [] [ text "Why not clear the rating using a button instead?" ]
     , button [ E.onClick ClickedClear3 ] [ text "Clear" ]
     ]

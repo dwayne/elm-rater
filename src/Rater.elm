@@ -7,8 +7,8 @@ import Html.Events as E
 import Rater.Rating as Rating exposing (Rating)
 
 
-view : (Rating -> msg) -> Bool -> Rating -> Html msg
-view onChange clearable rating =
+view : (Rating -> msg) -> Maybe (Int -> msg) -> Bool -> Rating -> Html msg
+view onChange maybeOnHover clearable rating =
   let
     ratio =
       Rating.ratio rating
@@ -24,7 +24,7 @@ view onChange clearable rating =
 
     viewSymbols =
       List.indexedMap
-        (\i -> viewSymbol onChange clearable rating (i + 1))
+        (\i -> viewSymbol onChange maybeOnHover clearable rating (i + 1))
         symbols
   in
   div
@@ -34,8 +34,8 @@ view onChange clearable rating =
     viewSymbols
 
 
-viewSymbol : (Rating -> msg) -> Bool -> Rating -> Int -> Html msg -> Html msg
-viewSymbol toMsg clearable rating value symbol =
+viewSymbol : (Rating -> msg) -> Maybe (Int -> msg) -> Bool -> Rating -> Int -> Html msg -> Html msg
+viewSymbol onChange maybeOnHover clearable rating value symbol =
   let
     ratio =
       Rating.ratio rating
@@ -45,12 +45,21 @@ viewSymbol toMsg clearable rating value symbol =
         0
       else
         value
+
+    onHoverAttr =
+      case maybeOnHover of
+        Nothing ->
+          []
+
+        Just onHover ->
+          [ E.onMouseOver (onHover value) ]
+
+    attrs =
+      [ style "display" "inline-block"
+      , E.onClick (onChange <| Rating.rate newValue rating)
+      ] ++ onHoverAttr
   in
-  div
-    [ style "display" "inline-block"
-    , E.onClick (toMsg <| Rating.rate newValue rating)
-    ]
-    [ symbol ]
+  div attrs [ symbol ]
 
 
 symbolEmpty : Html msg
