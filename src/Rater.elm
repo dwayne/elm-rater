@@ -2,7 +2,7 @@ module Rater exposing
   ( State
   , init
   , ActiveConfig, HoverHandlers
-  , view, viewReadOnly
+  , view, viewReadOnly, viewDisabled
   )
 
 
@@ -146,6 +146,39 @@ viewReadOnly rating =
 
 viewReadOnlySymbol : Html msg -> Html msg
 viewReadOnlySymbol symbol =
+  div
+    [ style "display" "inline-block" ]
+    [ symbol ]
+
+
+viewDisabled : Rating -> Html msg
+viewDisabled rating =
+  let
+    ratio =
+      Rating.ratio rating
+
+    numFull =
+      ratio.value
+
+    numEmpty =
+      ratio.maxValue - ratio.value
+
+    symbols =
+      (List.repeat numFull symbolFull) ++ (List.repeat numEmpty symbolEmpty)
+
+    viewSymbols =
+      List.map viewDisabledSymbol symbols
+  in
+  div
+    [ style "display" "inline-block"
+    , style "cursor" "default"
+    , style "opacity" "0.5"
+    ]
+    viewSymbols
+
+
+viewDisabledSymbol : Html msg -> Html msg
+viewDisabledSymbol symbol =
   div
     [ style "display" "inline-block" ]
     [ symbol ]

@@ -197,4 +197,7 @@ view model =
 
     , h2 [] [ text "Read only" ]
     , Rater.viewReadOnly model.rating6
+
+    , h2 [] [ text "Disabled" ]
+    , Rater.viewDisabled model.rating6
     ]
