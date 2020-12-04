@@ -57,13 +57,14 @@ init =
 
 type Msg
   = ChangedRating1 Rating
-
   | ChangedRating2 Rating
 
   | ChangedRating3 Rating
+  | ClearedRater3
   | ClickedClear3
 
   | ChangedRating4 Rating
+  | ClearedRater4
   | HoveredOverRater4 Rater.State Int
   | LeftRater4 Rater.State
 
@@ -84,11 +85,17 @@ update msg model =
     ChangedRating3 newRating ->
       { model | rating3 = newRating }
 
+    ClearedRater3 ->
+      { model | rating3 = Rating.zero model.rating3 }
+
     ClickedClear3 ->
-      { model | rating3 = Rating.outOf5 0 }
+      { model | rating3 = Rating.zero model.rating3 }
 
     ChangedRating4 newRating ->
       { model | rating4 = newRating }
+
+    ClearedRater4 ->
+      { model | rating4 = Rating.zero model.rating4 }
 
     HoveredOverRater4 state _ ->
       { model | rater4 = state }
@@ -115,27 +122,26 @@ view model =
     [ h1 [] [ text "Elm Rater Examples" ]
 
     , h2 [] [ text "A 5 star rater" ]
-    , Rater.view ChangedRating1 True model.rating1
+    , Rater.viewSimple ChangedRating1 model.rating1
 
     , h2 [] [ text "You can have any number of stars, for e.g. 25" ]
-    , Rater.view ChangedRating2 True model.rating2
+    , Rater.viewSimple ChangedRating2 model.rating2
 
-    , h2 [] [ text "You can disable clearing" ]
+    , h2 [] [ text "You can enable clearing" ]
+    , Rater.viewClearable ChangedRating3 ClearedRater3 model.rating3
     , p []
         [ text <| String.join " "
-            [ "Usually you can clear the rater by clicking on its current"
-            , "rating. Try it on the above raters. However, on this rater"
-            , "clearing has been disabled."
+            [ "By default you have to clear the rater by clicking on its"
+            , "current rating. However, you don't have to."
             ]
         ]
-    , Rater.view ChangedRating3 False model.rating3
-    , p [] [ text "Why not clear the rating using a button instead?" ]
+    , p [] [ text "Why not clear the rater using a button instead?" ]
     , button [ E.onClick ClickedClear3 ] [ text "Clear" ]
 
     , h2 [] [ text "You can enable hovering" ]
     , Rater.viewHoverable
         { onChange = ChangedRating4
-        , clearable = True
+        , maybeOnClear = Just ClearedRater4
         , onHover = HoveredOverRater4
         , onLeave = LeftRater4
         }
@@ -154,7 +160,7 @@ view model =
         ]
     , Rater.viewHoverable
         { onChange = ChangedRating5
-        , clearable = True
+        , maybeOnClear = Nothing
         , onHover = HoveredOverRater5
         , onLeave = LeftRater5
         }

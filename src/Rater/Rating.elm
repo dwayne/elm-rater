@@ -2,6 +2,7 @@ module Rater.Rating exposing
   ( Rating
   , Ratio
   , outOf5, outOf
+  , zero
   , ratio
   , rate
   )
@@ -32,6 +33,11 @@ outOf maxValue value =
       min clampedMaxValue (max 0 value)
   in
   Rating (Ratio clampedMaxValue clampedValue)
+
+
+zero : Rating -> Rating
+zero (Rating { maxValue }) =
+  Rating (Ratio maxValue 0)
 
 
 ratio : Rating -> Ratio

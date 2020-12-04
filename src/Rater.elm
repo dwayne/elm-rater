@@ -1,7 +1,9 @@
 module Rater exposing
   ( State
   , init
-  , view, viewHoverable, viewReadOnly, viewDisabled
+  , viewSimple, viewClearable, viewHoverable
+  , viewReadOnly
+  , viewDisabled
   )
 
 
@@ -38,7 +40,7 @@ type Activity msg
 
 type alias ActiveConfig msg =
   { onChange : Rating -> msg
-  , clearable : Bool
+  , maybeOnClear : Maybe msg
   , hoverHandlers : Maybe (HoverHandlers msg)
   }
 
@@ -49,23 +51,28 @@ type alias HoverHandlers msg =
   }
 
 
-view : (Rating -> msg) -> Bool -> Rating -> Html msg
-view onChange clearable rating =
-  viewActive (ActiveConfig onChange clearable Nothing) Permanent rating
+viewSimple : (Rating -> msg) -> Rating -> Html msg
+viewSimple onChange rating =
+  viewActive (ActiveConfig onChange Nothing Nothing) Permanent rating
+
+
+viewClearable : (Rating -> msg) -> msg -> Rating -> Html msg
+viewClearable onChange onClear rating =
+  viewActive (ActiveConfig onChange (Just onClear) Nothing) Permanent rating
 
 
 viewHoverable
   : { onChange : Rating -> msg
-    , clearable : Bool
+    , maybeOnClear : Maybe msg
     , onHover : State -> Int -> msg
     , onLeave : State -> msg
     }
   -> State
   -> Rating
   -> Html msg
-viewHoverable { onChange, clearable, onHover, onLeave } state rating =
+viewHoverable { onChange, maybeOnClear, onHover, onLeave } state rating =
   viewActive
-    (ActiveConfig onChange clearable (Just (HoverHandlers onHover onLeave)))
+    (ActiveConfig onChange maybeOnClear (Just (HoverHandlers onHover onLeave)))
     state
     rating
 
@@ -111,11 +118,19 @@ viewSymbol config state rating value symbol =
     ratio =
       Rating.ratio rating
 
-    newValue =
-      if config.clearable && value == ratio.value then
-        0
-      else
-        value
+    clickAttrs =
+      case config.maybeOnClear of
+        Nothing ->
+          if value == ratio.value then
+            []
+          else
+            [ E.onClick (config.onChange <| Rating.rate value rating) ]
+
+        Just onClear ->
+          if value == ratio.value then
+            [ E.onClick onClear ]
+          else
+            [ E.onClick (config.onChange <| Rating.rate value rating) ]
 
     hoverAttrs =
       case config.hoverHandlers of
@@ -132,9 +147,7 @@ viewSymbol config state rating value symbol =
           ]
 
     attrs =
-      [ style "display" "inline-block"
-      , E.onClick (config.onChange <| Rating.rate newValue rating)
-      ] ++ hoverAttrs
+      [ style "display" "inline-block"] ++ clickAttrs ++ hoverAttrs
   in
   div attrs [ symbol ]
 
