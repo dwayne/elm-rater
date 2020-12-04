@@ -1,4 +1,4 @@
-module Rater exposing (view)
+module Rater exposing (State, init, view)
 
 
 import Html exposing (Html, div, span, text)
@@ -7,11 +7,36 @@ import Html.Events as E
 import Rater.Rating as Rating exposing (Rating)
 
 
-view : (Rating -> msg) -> Maybe (Int -> msg) -> Bool -> Rating -> Html msg
-view onChange maybeOnHover clearable rating =
+type State
+  = Permanent
+  | Transient Rating
+
+
+init : State
+init =
+  Permanent
+
+
+view
+  : (State -> Rating -> msg)
+  -> Maybe (State -> Int -> msg)
+  -> Maybe (State -> msg)
+  -> Bool
+  -> State
+  -> Rating
+  -> Html msg
+view onChange maybeOnHover maybeOnLeave clearable state rating =
   let
+    currentRating =
+      case state of
+        Permanent ->
+          rating
+
+        Transient transientRating ->
+          transientRating
+
     ratio =
-      Rating.ratio rating
+      Rating.ratio currentRating
 
     numFull =
       ratio.value
@@ -24,7 +49,7 @@ view onChange maybeOnHover clearable rating =
 
     viewSymbols =
       List.indexedMap
-        (\i -> viewSymbol onChange maybeOnHover clearable rating (i + 1))
+        (\i -> viewSymbol onChange maybeOnHover maybeOnLeave clearable state rating (i + 1))
         symbols
   in
   div
@@ -34,8 +59,17 @@ view onChange maybeOnHover clearable rating =
     viewSymbols
 
 
-viewSymbol : (Rating -> msg) -> Maybe (Int -> msg) -> Bool -> Rating -> Int -> Html msg -> Html msg
-viewSymbol onChange maybeOnHover clearable rating value symbol =
+viewSymbol
+  : (State -> Rating -> msg)
+  -> Maybe (State -> Int -> msg)
+  -> Maybe (State -> msg)
+  -> Bool
+  -> State
+  -> Rating
+  -> Int
+  -> Html msg
+  -> Html msg
+viewSymbol onChange maybeOnHover maybeOnLeave clearable state rating value symbol =
   let
     ratio =
       Rating.ratio rating
@@ -46,18 +80,30 @@ viewSymbol onChange maybeOnHover clearable rating value symbol =
       else
         value
 
-    onHoverAttr =
+    hoverAttrs =
       case maybeOnHover of
         Nothing ->
           []
 
         Just onHover ->
-          [ E.onMouseOver (onHover value) ]
+          let
+            transientRating =
+              Rating.outOf ratio.maxValue value
+          in
+          [ E.onMouseOver (onHover (Transient transientRating) value) ]
+
+    leaveAttrs =
+      case maybeOnLeave of
+        Nothing ->
+          []
+
+        Just onLeave ->
+          [ E.onMouseOut (onLeave Permanent) ]
 
     attrs =
       [ style "display" "inline-block"
-      , E.onClick (onChange <| Rating.rate newValue rating)
-      ] ++ onHoverAttr
+      , E.onClick (onChange Permanent <| Rating.rate newValue rating)
+      ] ++ hoverAttrs ++ leaveAttrs
   in
   div attrs [ symbol ]
 
