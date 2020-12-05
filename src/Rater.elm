@@ -41,11 +41,11 @@ type Activity msg
 type alias ActiveConfig msg =
   { onChange : Rating -> msg
   , maybeOnClear : Maybe msg
-  , hoverHandlers : Maybe (HoverHandlers msg)
+  , maybeHoverConfig : Maybe (HoverConfig msg)
   }
 
 
-type alias HoverHandlers msg =
+type alias HoverConfig msg =
   { onHover : State -> Int -> msg
   , onLeave : State -> msg
   }
@@ -72,7 +72,7 @@ viewHoverable
   -> Html msg
 viewHoverable { onChange, maybeOnClear, onHover, onLeave } state rating =
   viewActive
-    (ActiveConfig onChange maybeOnClear (Just (HoverHandlers onHover onLeave)))
+    (ActiveConfig onChange maybeOnClear (Just (HoverConfig onHover onLeave)))
     state
     rating
 
@@ -133,17 +133,17 @@ viewSymbol config state rating value symbol =
             [ E.onClick (config.onChange <| Rating.rate value rating) ]
 
     hoverAttrs =
-      case config.hoverHandlers of
+      case config.maybeHoverConfig of
         Nothing ->
           []
 
-        Just handlers ->
+        Just hoverConfig ->
           let
             transientRating =
               Rating.outOf ratio.maxValue value
           in
-          [ E.onMouseOver (handlers.onHover (Transient transientRating) value)
-          , E.onMouseOut (handlers.onLeave Permanent)
+          [ E.onMouseOver (hoverConfig.onHover (Transient transientRating) value)
+          , E.onMouseOut (hoverConfig.onLeave Permanent)
           ]
 
     attrs =
