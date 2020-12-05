@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Example 3</title>
+
+    <link rel="stylesheet" href="/index.css">
+
+    <style>
+      .elm-rater__symbol .heart {
+        font-size: 32px;
+      }
+
+      .elm-rater__symbol--empty .heart {
+        color: black;
+      }
+
+      .elm-rater__symbol--full .heart {
+        color: red;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>More than stars</h1>
+
+    <p>
+      <div class="elm-rater elm-rater--horizontal">
+        <div class="elm-rater__symbols">
+          <div class="elm-rater__symbol elm-rater__symbol--full">
+            1
+          </div>
+          <div class="elm-rater__symbol elm-rater__symbol--full">
+            2
+          </div>
+          <div class="elm-rater__symbol elm-rater__symbol--empty">
+            _
+          </div>
+          <div class="elm-rater__symbol elm-rater__symbol--empty">
+            _
+          </div>
+          <div class="elm-rater__symbol elm-rater__symbol--empty">
+            _
+          </div>
+        </div>
+      </div>
+    </p>
+
+    <p>
+      <div class="elm-rater elm-rater--horizontal">
+        <div class="elm-rater__symbols">
+          <div class="elm-rater__symbol elm-rater__symbol--full">
+            <span class="heart" title="1">&#x02764;</span>
+          </div>
+          <div class="elm-rater__symbol elm-rater__symbol--full">
+            <span class="heart" title="2">&#x02764;</span>
+          </div>
+          <div class="elm-rater__symbol elm-rater__symbol--empty">
+            <span class="heart" title="3">&#x02764;</span>
+          </div>
+          <div class="elm-rater__symbol elm-rater__symbol--empty">
+            <span class="heart" title="4">&#x02764;</span>
+          </div>
+          <div class="elm-rater__symbol elm-rater__symbol--empty">
+            <span class="heart" title="5">&#x02764;</span>
+          </div>
+        </div>
+      </div>
+    </p>
+  </body>
+</html>

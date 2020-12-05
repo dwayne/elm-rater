@@ -1,0 +1,37 @@
+.elm-rater {
+  display: inline-block;
+  cursor: pointer;
+}
+
+.elm-rater--disabled {
+  opacity: 0.5;
+}
+
+.elm-rater__symbols {
+  display: flex;
+}
+
+.elm-rater--horizontal .elm-rater__symbols {
+  flex-direction: row;
+}
+
+.elm-rater--horizontal-reverse .elm-rater__symbols {
+  flex-direction: row-reverse;
+}
+
+.elm-rater--vertical .elm-rater__symbols {
+  flex-direction: column;
+}
+
+.elm-rater--vertical-reverse .elm-rater__symbols {
+  flex-direction: column-reverse;
+}
+
+.elm-rater__symbol {
+  display: inline-block;
+}
+
+.elm-rater__symbol .star {
+  font-size: 48px;
+  color: orange;
+}
