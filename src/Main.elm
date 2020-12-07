@@ -1,7 +1,8 @@
 module Main exposing (main)
 
 import Browser
-import Html exposing (Html, button, div, h1, h2, p, text)
+import Html exposing (Html, button, div, h1, h2, p, span, text)
+import Html.Attributes as A
 import Html.Events as E
 import Rater
 import Rater.Rating as Rating exposing (Rating)
@@ -32,6 +33,9 @@ type alias Model =
   , rater5MaybeTransientValue : Maybe Int
 
   , rating6 : Rating
+
+  , rater7 : Rater.State
+  , rating7 : Rating
   }
 
 
@@ -49,6 +53,9 @@ init =
   , rater5MaybeTransientValue = Nothing
 
   , rating6 = Rating.outOf5 3
+
+  , rater7 = Rater.init
+  , rating7 = Rating.outOf5 1
   }
 
 
@@ -71,6 +78,10 @@ type Msg
   | ChangedRating5 Rating
   | HoveredOverRater5 Rater.State Int
   | LeftRater5 Rater.State
+
+  | ChangedRating7 Rating
+  | HoveredOverRater7 Rater.State Int
+  | LeftRater7 Rater.State
 
 
 update : Msg -> Model -> Model
@@ -111,6 +122,15 @@ update msg model =
 
     LeftRater5 state ->
       { model | rater5 = state, rater5MaybeTransientValue = Nothing }
+
+    ChangedRating7 newRating ->
+      { model | rating7 = newRating }
+
+    HoveredOverRater7 state _ ->
+      { model | rater7 = state }
+
+    LeftRater7 state ->
+      { model | rater7 = state }
 
 
 -- VIEW
@@ -172,4 +192,56 @@ view model =
 
     , h2 [] [ text "Disabled" ]
     , Rater.viewDisabled model.rating6
+
+    , h2 [] [ text "More than stars, customize the HTML" ]
+    , p []
+        [ Rater.viewActiveCustom
+            { onChange = ChangedRating7
+            , maybeOnClear = Nothing
+            , maybeHoverConfig = Just
+                { state = model.rater7
+                , onHover = HoveredOverRater7
+                , onLeave = LeftRater7
+                , symbolTransient = text << String.fromInt
+                }
+            , orientation = Rater.Horizontal
+            , symbolEmpty = always (text "_")
+            , symbolPermanent = text << String.fromInt
+            }
+            model.rating7
+        ]
+    , p []
+        [ Rater.viewActiveCustom
+            { onChange = ChangedRating7
+            , maybeOnClear = Nothing
+            , maybeHoverConfig = Just
+                { state = model.rater7
+                , onHover = HoveredOverRater7
+                , onLeave = LeftRater7
+                , symbolTransient =
+                    \value ->
+                      span
+                        [ A.class "heart"
+                        , A.title (String.fromInt value)
+                        ]
+                        [ text "\u{2764}" ]
+                }
+            , orientation = Rater.Horizontal
+            , symbolEmpty =
+                \value ->
+                  span
+                    [ A.class "heart"
+                    , A.title (String.fromInt value)
+                    ]
+                    [ text "\u{2764}" ]
+            , symbolPermanent =
+                \value ->
+                  span
+                    [ A.class "heart"
+                    , A.title (String.fromInt value)
+                    ]
+                    [ text "\u{2764}" ]
+            }
+            model.rating7
+        ]
     ]
