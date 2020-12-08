@@ -1,5 +1,6 @@
 module Main exposing (main)
 
+
 import Browser
 import Html exposing (Html, a, button, div, h1, h2, h3, input, p, span, text)
 import Html.Attributes as A
@@ -49,6 +50,9 @@ type alias Model =
 
   , rater11 : Rater.State
   , rating11 : Rating
+
+  , rater12 : Rater.State
+  , rating12 : Rating
   }
 
 
@@ -82,6 +86,9 @@ init =
 
   , rater11 = Rater.init
   , rating11 = Rating.outOf5 0
+
+  , rater12 = Rater.init
+  , rating12 = Rating.outOf 6 1
   }
 
 
@@ -124,6 +131,11 @@ type Msg
   | ClearedRater11
   | HoveredOverRater11 Rater.State Int
   | LeftRater11 Rater.State
+
+  | ChangedRating12 Rating
+  | ClearedRater12
+  | HoveredOverRater12 Rater.State Int
+  | LeftRater12 Rater.State
 
 
 update : Msg -> Model -> Model
@@ -214,6 +226,19 @@ update msg model =
 
     LeftRater11 state ->
       { model | rater11 = state }
+
+    ChangedRating12 newRating ->
+      { model | rating12 = newRating }
+
+    ClearedRater12 ->
+      { model | rating12 = Rating.zero model.rating12 }
+
+    HoveredOverRater12 state _ ->
+      { model | rater12 = state }
+
+    LeftRater12 state ->
+      { model | rater12 = state }
+
 
 -- VIEW
 
@@ -418,6 +443,23 @@ view model =
         }
         model.rater11
         model.rating11
+
+    , h3 [] [ text "Pill Rating" ]
+    , Rater.viewCustomHoverable
+        { orientation = Rater.horizontal
+        , symbols =
+            Rater.sameSymbols <|
+              \value ->
+                div
+                  [ A.class "rater12__symbol" ]
+                  [ text (toRater12String value) ]
+        , onChange = ChangedRating12
+        , onClear = Just ClearedRater12
+        , onHover = HoveredOverRater12
+        , onLeave = LeftRater12
+        }
+        model.rater12
+        model.rating12
     ]
 
 
@@ -438,6 +480,31 @@ toRater10String value =
 
     4 ->
       "Awesome"
+
+    _ ->
+      ""
+
+
+toRater12String : Int -> String
+toRater12String value =
+  case value of
+    1 ->
+      "A"
+
+    2 ->
+      "B"
+
+    3 ->
+      "C"
+
+    4 ->
+      "D"
+
+    5 ->
+      "E"
+
+    6 ->
+      "F"
 
     _ ->
       ""
