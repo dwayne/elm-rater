@@ -42,6 +42,10 @@ type alias Model =
   , rater9 : Rater.State
   , rating9 : Rating
   , rater9MaybeTransientValue : Maybe Int
+
+  , rater10 : Rater.State
+  , rating10 : Rating
+  , rater10MaybeTransientValue : Maybe Int
   }
 
 
@@ -68,6 +72,10 @@ init =
   , rater9 = Rater.init
   , rating9 = Rating.outOf 10 7
   , rater9MaybeTransientValue = Nothing
+
+  , rater10 = Rater.init
+  , rating10 = Rating.outOf 4 2
+  , rater10MaybeTransientValue = Nothing
   }
 
 
@@ -101,6 +109,10 @@ type Msg
   | ChangedRating9 Rating
   | HoveredOverRater9 Rater.State Int
   | LeftRater9 Rater.State
+
+  | ChangedRating10 Rating
+  | HoveredOverRater10 Rater.State Int
+  | LeftRater10 Rater.State
 
 
 update : Msg -> Model -> Model
@@ -170,6 +182,15 @@ update msg model =
 
     LeftRater9 state ->
       { model | rater9 = state, rater9MaybeTransientValue = Nothing }
+
+    ChangedRating10 newRating ->
+      { model | rating10 = newRating }
+
+    HoveredOverRater10 state value ->
+      { model | rater10 = state, rater10MaybeTransientValue = Just value }
+
+    LeftRater10 state ->
+      { model | rater10 = state, rater10MaybeTransientValue = Nothing }
 
 -- VIEW
 
@@ -320,9 +341,9 @@ view model =
             (Rater.customConfig
               { orientation = Rater.Horizontal
               , symbolEmpty =
-                  Just <| always (div [ A.class "rater9__star" ] [])
+                  Just <| always (div [ A.class "rater9__symbol" ] [])
               , symbolFull =
-                  Just <| always (div [ A.class "rater9__star" ] [])
+                  Just <| always (div [ A.class "rater9__symbol" ] [])
               , onChange = ChangedRating9
               , onClear = Nothing
               , hoverConfig =
@@ -345,4 +366,61 @@ view model =
                       transientValue
             ]
         ]
+
+    , h3 [] [ text "Movie Rating" ]
+    , div [ A.class "rater10" ]
+        [ div
+            [ A.class "rater10__items" ]
+            [ Rater.view
+                (Rater.customConfig
+                  { orientation = Rater.Horizontal
+                  , symbolEmpty =
+                      Just <| always (div [ A.class "rater10__symbol" ] [])
+                  , symbolFull =
+                      Just <| always (div [ A.class "rater10__symbol" ] [])
+                  , onChange = ChangedRating10
+                  , onClear = Nothing
+                  , hoverConfig =
+                      Just
+                        { state = model.rater10
+                        , onHover = HoveredOverRater10
+                        , onLeave = LeftRater10
+                        }
+                  })
+                model.rating10
+            , span
+                [ A.class "rater10__value" ]
+                [ text <|
+                    toRater10String <|
+                      case model.rater10MaybeTransientValue of
+                        Nothing ->
+                          (Rating.ratio model.rating10).value
+
+                        Just transientValue ->
+                          transientValue
+                ]
+            ]
+        ]
     ]
+
+
+-- HELPERS
+
+
+toRater10String : Int -> String
+toRater10String value =
+  case value of
+    1 ->
+      "Bad"
+
+    2 ->
+      "Mediocre"
+
+    3 ->
+      "Good"
+
+    4 ->
+      "Awesome"
+
+    _ ->
+      ""
