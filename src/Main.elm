@@ -46,6 +46,9 @@ type alias Model =
   , rater10 : Rater.State
   , rating10 : Rating
   , rater10MaybeTransientValue : Maybe Int
+
+  , rater11 : Rater.State
+  , rating11 : Rating
   }
 
 
@@ -76,6 +79,9 @@ init =
   , rater10 = Rater.init
   , rating10 = Rating.outOf 4 2
   , rater10MaybeTransientValue = Nothing
+
+  , rater11 = Rater.init
+  , rating11 = Rating.outOf5 0
   }
 
 
@@ -113,6 +119,11 @@ type Msg
   | ChangedRating10 Rating
   | HoveredOverRater10 Rater.State Int
   | LeftRater10 Rater.State
+
+  | ChangedRating11 Rating
+  | ClearedRater11
+  | HoveredOverRater11 Rater.State Int
+  | LeftRater11 Rater.State
 
 
 update : Msg -> Model -> Model
@@ -191,6 +202,18 @@ update msg model =
 
     LeftRater10 state ->
       { model | rater10 = state, rater10MaybeTransientValue = Nothing }
+
+    ChangedRating11 newRating ->
+      { model | rating11 = newRating }
+
+    ClearedRater11 ->
+      { model | rating11 = Rating.zero model.rating11 }
+
+    HoveredOverRater11 state _ ->
+      { model | rater11 = state }
+
+    LeftRater11 state ->
+      { model | rater11 = state }
 
 -- VIEW
 
@@ -401,6 +424,33 @@ view model =
                 ]
             ]
         ]
+
+    , h3 [] [ text "Square Rating" ]
+    , Rater.view
+        (Rater.customConfig
+          { orientation = Rater.Horizontal
+          , symbolEmpty =
+              Just <|
+                \value ->
+                  div
+                    [ A.class "rater11__symbol" ]
+                    [ div [] [ text (String.fromInt value) ] ]
+          , symbolFull =
+              Just <|
+                \value ->
+                  div
+                    [ A.class "rater11__symbol" ]
+                    [ div [] [ text (String.fromInt value) ] ]
+          , onChange = ChangedRating11
+          , onClear = Just ClearedRater11
+          , hoverConfig =
+              Just
+                { state = model.rater11
+                , onHover = HoveredOverRater11
+                , onLeave = LeftRater11
+                }
+          })
+        model.rating11
     ]
 
 
