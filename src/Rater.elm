@@ -3,19 +3,26 @@ module Rater exposing
   , init
 
   , viewReadOnly, viewDisabled
+  , viewSimple, viewClearable, viewHoverable
 
-  , Customizations, Orientation(..)
-  , defaultCustomizations
+  , Orientation
+  , horizontal, horizontalReverse, vertical, verticalReverse
+  , defaultOrientation
+
+  , SymbolsCustomization
+  , sameSymbols, differentSymbols
+  , defaultSymbols, defaultSymbolEmpty, defaultSymbolFull
 
   , viewCustomReadOnly, viewCustomDisabled
+  , viewCustomHoverable
+
+  , Customization
+  , defaultCustomization
 
   , Config, HoverConfig
   , customConfig
 
-  , viewSimple, viewClearable, viewHoverable
   , view
-
-  , defaultSymbolEmpty, defaultSymbolFull
   )
 
 
@@ -35,10 +42,125 @@ init =
   Permanent
 
 
+-- ORIENTATION
+
+
+type Orientation
+  = Horizontal
+  | HorizontalReverse
+  | Vertical
+  | VerticalReverse
+
+
+horizontal : Orientation
+horizontal =
+  Horizontal
+
+
+horizontalReverse : Orientation
+horizontalReverse =
+  HorizontalReverse
+
+
+vertical : Orientation
+vertical =
+  Vertical
+
+
+verticalReverse : Orientation
+verticalReverse =
+  VerticalReverse
+
+
+defaultOrientation : Orientation
+defaultOrientation =
+  Horizontal
+
+
+orientationClass : Orientation -> String
+orientationClass orientation =
+  case orientation of
+    Horizontal ->
+      "elm-rater--horizontal"
+
+    HorizontalReverse ->
+      "elm-rater--horizontal-reverse"
+
+    Vertical ->
+      "elm-rater--vertical"
+
+    VerticalReverse ->
+      "elm-rater--vertical-reverse"
+
+
+-- SYMBOL
+
+
+type SymbolsCustomization msg
+  = Same (Int -> Html msg)
+  | Different
+      { symbolEmpty : Int -> Html msg
+      , symbolFull : Int -> Html msg
+      }
+
+
+sameSymbols : (Int -> Html msg) -> SymbolsCustomization msg
+sameSymbols =
+  Same
+
+
+differentSymbols
+  : { symbolEmpty : Int -> Html msg
+    , symbolFull : Int -> Html msg
+    }
+  -> SymbolsCustomization msg
+differentSymbols =
+  Different
+
+
+defaultSymbols : SymbolsCustomization msg
+defaultSymbols =
+  differentSymbols
+    { symbolEmpty = always defaultSymbolEmpty
+    , symbolFull = always defaultSymbolFull
+    }
+
+
+defaultSymbolEmpty : Html msg
+defaultSymbolEmpty =
+  span [ class "elm-rater__star" ] [ text "\u{2606}" ]
+
+
+defaultSymbolFull : Html msg
+defaultSymbolFull =
+  span [ class "elm-rater__star" ] [ text "\u{2605}" ]
+
+
+-- CUSTOMIZATION
+
+
+type Customization msg =
+  Customization
+    { orientation : Orientation
+    , symbols : SymbolsCustomization msg
+    }
+
+
+defaultCustomization : Customization msg
+defaultCustomization =
+  Customization
+    { orientation = defaultOrientation
+    , symbols = defaultSymbols
+    }
+
+
+-- CONFIG
+
+
 type Config msg =
   Config
     { mode : Mode msg
-    , customizations : Customizations msg
+    , customization : Customization msg
     }
 
 
@@ -50,8 +172,8 @@ type Mode msg
 
 type alias ActiveConfig msg =
   { onChange : Rating -> msg
-  , maybeOnClear : Maybe msg
-  , maybeHoverConfig : Maybe (HoverConfig msg)
+  , onClear : Maybe msg
+  , hoverConfig : Maybe (HoverConfig msg)
   }
 
 
@@ -62,46 +184,62 @@ type alias HoverConfig msg =
   }
 
 
-type alias Customizations msg =
-  { orientation : Orientation
-  , symbolEmpty : Int -> Html msg
-  , symbolFull : Int -> Html msg
-  }
+customConfig
+  : { orientation : Orientation
+    , symbols : Maybe (SymbolsCustomization msg)
+    , onChange : Rating -> msg
+    , onClear : Maybe msg
+    , hoverConfig : Maybe (HoverConfig msg)
+    }
+  -> Config msg
+customConfig options =
+  let
+    mode =
+      Active
+        { onChange = options.onChange
+        , onClear = options.onClear
+        , hoverConfig = options.hoverConfig
+        }
+
+    customization =
+      { orientation = options.orientation
+      , symbols = Maybe.withDefault defaultSymbols options.symbols
+      }
+  in
+  Config { mode = mode, customization = Customization customization }
 
 
-type Orientation
-  = Horizontal
-  | HorizontalReverse
-  | Vertical
-  | VerticalReverse
+-- VIEW
 
 
 viewReadOnly : Rating -> Html msg
 viewReadOnly =
-  viewCustomReadOnly defaultCustomizations
+  view (Config { mode = ReadOnly, customization = defaultCustomization })
 
 
-viewCustomReadOnly : Customizations msg -> Rating -> Html msg
-viewCustomReadOnly customizations =
-  view (Config { mode = ReadOnly, customizations = customizations })
+viewCustomReadOnly
+  : { orientation : Orientation
+    , symbols : SymbolsCustomization msg
+    }
+  -> Rating
+  -> Html msg
+viewCustomReadOnly customization =
+  view (Config { mode = ReadOnly, customization = Customization customization })
 
 
 viewDisabled : Rating -> Html msg
 viewDisabled =
-  viewCustomDisabled defaultCustomizations
+  view (Config { mode = Disabled, customization = defaultCustomization })
 
 
-viewCustomDisabled : Customizations msg -> Rating -> Html msg
-viewCustomDisabled customizations =
-  view (Config { mode = Disabled, customizations = customizations })
-
-
-defaultCustomizations : Customizations msg
-defaultCustomizations =
-  { orientation = Horizontal
-  , symbolEmpty = always defaultSymbolEmpty
-  , symbolFull = always defaultSymbolFull
-  }
+viewCustomDisabled
+  : { orientation : Orientation
+    , symbols : SymbolsCustomization msg
+    }
+  -> Rating
+  -> Html msg
+viewCustomDisabled customization =
+  view (Config { mode = Disabled, customization = Customization customization })
 
 
 viewSimple : (Rating -> msg) -> Rating -> Html msg
@@ -110,8 +248,7 @@ viewSimple onChange rating =
     config =
       customConfig
         { orientation = Horizontal
-        , symbolEmpty = Nothing
-        , symbolFull = Nothing
+        , symbols = Nothing
         , onChange = onChange
         , onClear = Nothing
         , hoverConfig = Nothing
@@ -126,8 +263,7 @@ viewClearable onChange onClear rating =
     config =
       customConfig
         { orientation = Horizontal
-        , symbolEmpty = Nothing
-        , symbolFull = Nothing
+        , symbols = Nothing
         , onChange = onChange
         , onClear = Just onClear
         , hoverConfig = Nothing
@@ -147,11 +283,37 @@ viewHoverable
   -> Html msg
 viewHoverable options state rating =
   let
+    allOptions =
+      case defaultCustomization of
+        Customization customization ->
+          { orientation = customization.orientation
+          , symbols = customization.symbols
+          , onChange = options.onChange
+          , onClear = options.onClear
+          , onHover = options.onHover
+          , onLeave = options.onLeave
+          }
+  in
+  viewCustomHoverable allOptions state rating
+
+
+viewCustomHoverable
+  : { orientation : Orientation
+    , symbols : SymbolsCustomization msg
+    , onChange : Rating -> msg
+    , onClear : Maybe msg
+    , onHover : State -> Int -> msg
+    , onLeave : State -> msg
+    }
+  -> State
+  -> Rating
+  -> Html msg
+viewCustomHoverable options state rating =
+  let
     config =
       customConfig
-        { orientation = Horizontal
-        , symbolEmpty = Nothing
-        , symbolFull = Nothing
+        { orientation = options.orientation
+        , symbols = Just options.symbols
         , onChange = options.onChange
         , onClear = options.onClear
         , hoverConfig =
@@ -165,42 +327,26 @@ viewHoverable options state rating =
   view config rating
 
 
-customConfig
-  : { orientation : Orientation
-    , symbolEmpty : Maybe (Int -> Html msg)
-    , symbolFull : Maybe (Int -> Html msg)
-    , onChange : Rating -> msg
-    , onClear : Maybe msg
-    , hoverConfig : Maybe (HoverConfig msg)
-    }
-  -> Config msg
-customConfig options =
-  let
-    mode =
-      Active
-        { onChange = options.onChange
-        , maybeOnClear = options.onClear
-        , maybeHoverConfig = options.hoverConfig
-        }
-
-    customizations =
-      { orientation = options.orientation
-      , symbolEmpty = Maybe.withDefault (always defaultSymbolEmpty) options.symbolEmpty
-      , symbolFull = Maybe.withDefault (always defaultSymbolFull) options.symbolFull
-      }
-  in
-  Config { mode = mode, customizations = customizations }
-
-
 view : Config msg -> Rating -> Html msg
 view (Config config) rating =
+  let
+    (orientation, symbolEmpty, symbolFull) =
+      case config.customization of
+        Customization customization ->
+          case customization.symbols of
+            Same symbol ->
+              (customization.orientation, symbol, symbol)
+
+            Different symbols ->
+              (customization.orientation, symbols.symbolEmpty, symbols.symbolFull)
+  in
   case config.mode of
     ReadOnly ->
       viewHelper
-        { orientation = config.customizations.orientation
-        , symbolEmpty = config.customizations.symbolEmpty
-        , symbolFull = config.customizations.symbolFull
-        , maybeHoverConfig = Nothing
+        { orientation = orientation
+        , symbolEmpty = symbolEmpty
+        , symbolFull = symbolFull
+        , hoverConfig = Nothing
         , blockAttrs = [ class "elm-rater--read-only" ]
         , symbolAttrs = always []
         }
@@ -208,10 +354,10 @@ view (Config config) rating =
 
     Disabled ->
       viewHelper
-        { orientation = config.customizations.orientation
-        , symbolEmpty = config.customizations.symbolEmpty
-        , symbolFull = config.customizations.symbolFull
-        , maybeHoverConfig = Nothing
+        { orientation = orientation
+        , symbolEmpty = symbolEmpty
+        , symbolFull = symbolFull
+        , hoverConfig = Nothing
         , blockAttrs = [ class "elm-rater--disabled" ]
         , symbolAttrs = always []
         }
@@ -221,20 +367,20 @@ view (Config config) rating =
       let
         changeConfig =
           { onChange = activeConfig.onChange
-          , maybeOnClear = activeConfig.maybeOnClear
+          , onClear = activeConfig.onClear
           }
       in
       viewHelper
-        { orientation = config.customizations.orientation
-        , symbolEmpty = config.customizations.symbolEmpty
-        , symbolFull = config.customizations.symbolFull
-        , maybeHoverConfig = activeConfig.maybeHoverConfig
+        { orientation = orientation
+        , symbolEmpty = symbolEmpty
+        , symbolFull = symbolFull
+        , hoverConfig = activeConfig.hoverConfig
         , blockAttrs = []
         , symbolAttrs =
             \value ->
               List.concat
                 [ onClickAttrs changeConfig rating value
-                , onHoverAttrs activeConfig.maybeHoverConfig rating value
+                , onHoverAttrs activeConfig.hoverConfig rating value
                 ]
         }
         rating
@@ -242,37 +388,37 @@ view (Config config) rating =
 
 onClickAttrs
   : { onChange : Rating -> msg
-    , maybeOnClear : Maybe msg
+    , onClear : Maybe msg
     }
   -> Rating
   -> Int
   -> List (Attribute msg)
-onClickAttrs { onChange, maybeOnClear } rating value =
+onClickAttrs handlers rating value =
   let
     ratio =
       Rating.ratio rating
   in
-    case maybeOnClear of
+    case handlers.onClear of
       Nothing ->
         if value == ratio.value then
           []
         else
-          [ E.onClick (onChange <| Rating.rate value rating) ]
+          [ E.onClick (handlers.onChange <| Rating.rate value rating) ]
 
       Just onClear ->
         if value == ratio.value then
           [ E.onClick onClear ]
         else
-          [ E.onClick (onChange <| Rating.rate value rating) ]
+          [ E.onClick (handlers.onChange <| Rating.rate value rating) ]
 
 
 onHoverAttrs : Maybe (HoverConfig msg) -> Rating -> Int -> List (Attribute msg)
-onHoverAttrs maybeHoverConfig rating value =
+onHoverAttrs hoverConfig rating value =
   let
     ratio =
       Rating.ratio rating
   in
-  case maybeHoverConfig of
+  case hoverConfig of
     Nothing ->
       []
 
@@ -290,7 +436,7 @@ viewHelper
   : { orientation : Orientation
     , symbolEmpty : Int -> Html msg
     , symbolFull : Int -> Html msg
-    , maybeHoverConfig : Maybe (HoverConfig msg)
+    , hoverConfig : Maybe (HoverConfig msg)
     , blockAttrs : List (Attribute msg)
     , symbolAttrs : Int -> List (Attribute msg)
     }
@@ -309,15 +455,15 @@ viewHelper options rating =
     viewSymbols =
       List.indexedMap
         (viewSymbol options.symbolAttrs)
-        (symbols symbolConfig maybeState rating)
+        (symbolBuilders symbols maybeState rating)
 
-    symbolConfig =
+    symbols =
       { symbolEmpty = options.symbolEmpty
       , symbolFull = options.symbolFull
       }
 
     maybeState =
-      case options.maybeHoverConfig of
+      case options.hoverConfig of
         Nothing ->
           Nothing
 
@@ -328,35 +474,19 @@ viewHelper options rating =
   div blockAttrs [ div [ class "elm-rater__symbols" ] viewSymbols ]
 
 
-orientationClass : Orientation -> String
-orientationClass orientation =
-  case orientation of
-    Horizontal ->
-      "elm-rater--horizontal"
-
-    HorizontalReverse ->
-      "elm-rater--horizontal-reverse"
-
-    Vertical ->
-      "elm-rater--vertical"
-
-    VerticalReverse ->
-      "elm-rater--vertical-reverse"
-
-
-type Symbol msg
+type SymbolBuilder msg
   = Empty (Int -> Html msg)
   | Full (Int -> Html msg)
 
 
-symbols
+symbolBuilders
   : { symbolEmpty : Int -> Html msg
     , symbolFull : Int -> Html msg
     }
   -> Maybe State
   -> Rating
-  -> List (Symbol msg)
-symbols { symbolEmpty, symbolFull } maybeState rating =
+  -> List (SymbolBuilder msg)
+symbolBuilders { symbolEmpty, symbolFull } maybeState rating =
   let
     currentRating =
       case maybeState of
@@ -384,19 +514,19 @@ symbols { symbolEmpty, symbolFull } maybeState rating =
     ]
 
 
-viewSymbol : (Int -> List (Attribute msg)) -> Int -> Symbol msg -> Html msg
-viewSymbol toAttrs index symbol =
+viewSymbol : (Int -> List (Attribute msg)) -> Int -> SymbolBuilder msg -> Html msg
+viewSymbol toAttrs index symbolBuilder =
   let
     value =
       index + 1
 
-    (symbolType, toHtml) =
-      case symbol of
-        Empty s ->
-          ("elm-rater__symbol--empty", s)
+    (symbolType, toSymbol) =
+      case symbolBuilder of
+        Empty builder ->
+          ("elm-rater__symbol--empty", builder)
 
-        Full s ->
-          ("elm-rater__symbol--full", s)
+        Full builder ->
+          ("elm-rater__symbol--full", builder)
 
     symbolAttrs =
       List.concat
@@ -404,14 +534,4 @@ viewSymbol toAttrs index symbol =
         , toAttrs value
         ]
   in
-  div symbolAttrs [ toHtml value ]
-
-
-defaultSymbolEmpty : Html msg
-defaultSymbolEmpty =
-  span [ class "elm-rater__star" ] [ text "\u{2606}" ]
-
-
-defaultSymbolFull : Html msg
-defaultSymbolFull =
-  span [ class "elm-rater__star" ] [ text "\u{2605}" ]
+  div symbolAttrs [ toSymbol value ]

@@ -277,51 +277,38 @@ view model =
 
     , h2 [] [ text "More than stars, customize the HTML" ]
     , p []
-        [ Rater.view
-            (Rater.customConfig
-              { orientation = Rater.Horizontal
-              , symbolEmpty = Just <| always (text "_")
-              , symbolFull = Just <| text << String.fromInt
-              , onChange = ChangedRating7
-              , onClear = Nothing
-              , hoverConfig =
-                  Just
-                    { state = model.rater7
-                    , onHover = HoveredOverRater7
-                    , onLeave = LeftRater7
-                    }
-              })
+        [ Rater.viewCustomHoverable
+            { orientation = Rater.horizontal
+            , symbols =
+                Rater.differentSymbols
+                  { symbolEmpty = always (text "_")
+                  , symbolFull = text << String.fromInt
+                  }
+            , onChange = ChangedRating7
+            , onClear = Nothing
+            , onHover = HoveredOverRater7
+            , onLeave = LeftRater7
+            }
+            model.rater7
             model.rating7
         ]
     , p []
-        [ Rater.view
-            (Rater.customConfig
-              { orientation = Rater.Horizontal
-              , symbolEmpty =
-                  Just <|
-                    \value ->
-                      span
-                        [ A.class "elm-rater__heart"
-                        , A.title (String.fromInt value)
-                        ]
-                        [ text "\u{2764}" ]
-              , symbolFull =
-                  Just <|
-                    \value ->
-                      span
-                        [ A.class "elm-rater__heart"
-                        , A.title (String.fromInt value)
-                        ]
-                        [ text "\u{2764}" ]
-              , onChange = ChangedRating7
-              , onClear = Nothing
-              , hoverConfig =
-                  Just
-                    { state = model.rater7
-                    , onHover = HoveredOverRater7
-                    , onLeave = LeftRater7
-                    }
-              })
+        [ Rater.viewCustomHoverable
+            { orientation = Rater.horizontal
+            , symbols =
+                Rater.sameSymbols <|
+                  \value ->
+                    span
+                      [ A.class "elm-rater__heart"
+                      , A.title (String.fromInt value)
+                      ]
+                      [ text "\u{2764}" ]
+            , onChange = ChangedRating7
+            , onClear = Nothing
+            , onHover = HoveredOverRater7
+            , onLeave = LeftRater7
+            }
+            model.rater7
             model.rating7
         ]
 
@@ -360,22 +347,17 @@ view model =
     , h3 [] [ text "1/10 Rating" ]
     , div
         [ A.class "rater9" ]
-        [ Rater.view
-            (Rater.customConfig
-              { orientation = Rater.Horizontal
-              , symbolEmpty =
-                  Just <| always (div [ A.class "rater9__symbol" ] [])
-              , symbolFull =
-                  Just <| always (div [ A.class "rater9__symbol" ] [])
-              , onChange = ChangedRating9
-              , onClear = Nothing
-              , hoverConfig =
-                  Just
-                    { state = model.rater9
-                    , onHover = HoveredOverRater9
-                    , onLeave = LeftRater9
-                    }
-              })
+        [ Rater.viewCustomHoverable
+            { orientation = Rater.horizontal
+            , symbols =
+                Rater.sameSymbols <|
+                  always (div [ A.class "rater9__symbol" ] [])
+            , onChange = ChangedRating9
+            , onClear = Nothing
+            , onHover = HoveredOverRater9
+            , onLeave = LeftRater9
+            }
+            model.rater9
             model.rating9
         , span
             [ A.class "rater9__value" ]
@@ -394,22 +376,17 @@ view model =
     , div [ A.class "rater10" ]
         [ div
             [ A.class "rater10__items" ]
-            [ Rater.view
-                (Rater.customConfig
-                  { orientation = Rater.Horizontal
-                  , symbolEmpty =
-                      Just <| always (div [ A.class "rater10__symbol" ] [])
-                  , symbolFull =
-                      Just <| always (div [ A.class "rater10__symbol" ] [])
-                  , onChange = ChangedRating10
-                  , onClear = Nothing
-                  , hoverConfig =
-                      Just
-                        { state = model.rater10
-                        , onHover = HoveredOverRater10
-                        , onLeave = LeftRater10
-                        }
-                  })
+            [ Rater.viewCustomHoverable
+                { orientation = Rater.horizontal
+                , symbols =
+                    Rater.sameSymbols <|
+                      always (div [ A.class "rater10__symbol" ] [])
+                , onChange = ChangedRating10
+                , onClear = Nothing
+                , onHover = HoveredOverRater10
+                , onLeave = LeftRater10
+                }
+                model.rater10
                 model.rating10
             , span
                 [ A.class "rater10__value" ]
@@ -426,30 +403,20 @@ view model =
         ]
 
     , h3 [] [ text "Square Rating" ]
-    , Rater.view
-        (Rater.customConfig
-          { orientation = Rater.Horizontal
-          , symbolEmpty =
-              Just <|
-                \value ->
-                  div
-                    [ A.class "rater11__symbol" ]
-                    [ div [] [ text (String.fromInt value) ] ]
-          , symbolFull =
-              Just <|
-                \value ->
-                  div
-                    [ A.class "rater11__symbol" ]
-                    [ div [] [ text (String.fromInt value) ] ]
-          , onChange = ChangedRating11
-          , onClear = Just ClearedRater11
-          , hoverConfig =
-              Just
-                { state = model.rater11
-                , onHover = HoveredOverRater11
-                , onLeave = LeftRater11
-                }
-          })
+    , Rater.viewCustomHoverable
+        { orientation = Rater.horizontal
+        , symbols =
+            Rater.sameSymbols <|
+              \value ->
+                div
+                  [ A.class "rater11__symbol" ]
+                  [ div [] [ text (String.fromInt value) ] ]
+        , onChange = ChangedRating11
+        , onClear = Just ClearedRater11
+        , onHover = HoveredOverRater11
+        , onLeave = LeftRater11
+        }
+        model.rater11
         model.rating11
     ]
 
