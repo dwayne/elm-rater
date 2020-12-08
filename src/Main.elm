@@ -1,7 +1,7 @@
 module Main exposing (main)
 
 import Browser
-import Html exposing (Html, button, div, h1, h2, input, p, span, text)
+import Html exposing (Html, a, button, div, h1, h2, h3, input, p, span, text)
 import Html.Attributes as A
 import Html.Events as E
 import Rater
@@ -38,6 +38,10 @@ type alias Model =
   , rating7 : Rating
 
   , rating8 : Rating
+
+  , rater9 : Rater.State
+  , rating9 : Rating
+  , rater9MaybeTransientValue : Maybe Int
   }
 
 
@@ -60,6 +64,10 @@ init =
   , rating7 = Rating.outOf5 1
 
   , rating8 = Rating.outOf 10 5
+
+  , rater9 = Rater.init
+  , rating9 = Rating.outOf 10 7
+  , rater9MaybeTransientValue = Nothing
   }
 
 
@@ -89,6 +97,10 @@ type Msg
 
   | ChangedRating8 Rating
   | EnteredInput8 String
+
+  | ChangedRating9 Rating
+  | HoveredOverRater9 Rater.State Int
+  | LeftRater9 Rater.State
 
 
 update : Msg -> Model -> Model
@@ -149,6 +161,15 @@ update msg model =
 
         Just value ->
           { model | rating8 = Rating.rate value model.rating8 }
+
+    ChangedRating9 newRating ->
+      { model | rating9 = newRating }
+
+    HoveredOverRater9 state value ->
+      { model | rater9 = state, rater9MaybeTransientValue = Just value }
+
+    LeftRater9 state ->
+      { model | rater9 = state, rater9MaybeTransientValue = Nothing }
 
 -- VIEW
 
@@ -280,5 +301,48 @@ view model =
             , E.onInput EnteredInput8
             ]
             []
+        ]
+
+    , h2 [] [ text "Even more customizations" ]
+    , p []
+        [ text "I recreated these examples from "
+        , a [ A.href "https://antennaio.github.io/jquery-bar-rating/"
+            , A.target "_blank"
+            ]
+            [ text "jQuery Bar Rating" ]
+        , text "."
+        ]
+
+    , h3 [] [ text "1/10 Rating" ]
+    , div
+        [ A.class "rater9" ]
+        [ Rater.view
+            (Rater.customConfig
+              { orientation = Rater.Horizontal
+              , symbolEmpty =
+                  Just <| always (div [ A.class "rater9__star" ] [])
+              , symbolFull =
+                  Just <| always (div [ A.class "rater9__star" ] [])
+              , onChange = ChangedRating9
+              , onClear = Nothing
+              , hoverConfig =
+                  Just
+                    { state = model.rater9
+                    , onHover = HoveredOverRater9
+                    , onLeave = LeftRater9
+                    }
+              })
+            model.rating9
+        , span
+            [ A.class "rater9__value" ]
+            [ text <|
+                String.fromInt <|
+                  case model.rater9MaybeTransientValue of
+                    Nothing ->
+                      (Rating.ratio model.rating9).value
+
+                    Just transientValue ->
+                      transientValue
+            ]
         ]
     ]
