@@ -1,7 +1,7 @@
 module Main exposing (main)
 
 import Browser
-import Html exposing (Html, button, div, h1, h2, p, span, text)
+import Html exposing (Html, button, div, h1, h2, input, p, span, text)
 import Html.Attributes as A
 import Html.Events as E
 import Rater
@@ -36,6 +36,8 @@ type alias Model =
 
   , rater7 : Rater.State
   , rating7 : Rating
+
+  , rating8 : Rating
   }
 
 
@@ -56,6 +58,8 @@ init =
 
   , rater7 = Rater.init
   , rating7 = Rating.outOf5 1
+
+  , rating8 = Rating.outOf 10 5
   }
 
 
@@ -82,6 +86,9 @@ type Msg
   | ChangedRating7 Rating
   | HoveredOverRater7 Rater.State Int
   | LeftRater7 Rater.State
+
+  | ChangedRating8 Rating
+  | EnteredInput8 String
 
 
 update : Msg -> Model -> Model
@@ -132,6 +139,16 @@ update msg model =
     LeftRater7 state ->
       { model | rater7 = state }
 
+    ChangedRating8 newRating ->
+      { model | rating8 = newRating }
+
+    EnteredInput8 str ->
+      case String.toInt str of
+        Nothing ->
+          model
+
+        Just value ->
+          { model | rating8 = Rating.rate value model.rating8 }
 
 -- VIEW
 
@@ -241,5 +258,27 @@ view model =
                     }
               })
             model.rating7
+        ]
+
+    , h2 [] [ text "You own the rating" ]
+    , p []
+        [ text <| String.join " "
+            [ "Let's give the rating to a numeric input as well and"
+            , "control the rating using that."
+            ]
+        ]
+    , p [] [ Rater.viewSimple ChangedRating8 model.rating8 ]
+    , p []
+        [ text "Use this input field to change the rating: "
+        , let
+            ratio =
+              Rating.ratio model.rating8
+          in
+          input
+            [ A.type_ "number"
+            , A.value (String.fromInt ratio.value)
+            , E.onInput EnteredInput8
+            ]
+            []
         ]
     ]
