@@ -161,7 +161,7 @@ view model =
     , h2 [] [ text "You can enable hovering" ]
     , Rater.viewHoverable
         { onChange = ChangedRating4
-        , maybeOnClear = Just ClearedRater4
+        , onClear = Just ClearedRater4
         , onHover = HoveredOverRater4
         , onLeave = LeftRater4
         }
@@ -180,7 +180,7 @@ view model =
         ]
     , Rater.viewHoverable
         { onChange = ChangedRating5
-        , maybeOnClear = Nothing
+        , onClear = Nothing
         , onHover = HoveredOverRater5
         , onLeave = LeftRater5
         }
@@ -195,53 +195,51 @@ view model =
 
     , h2 [] [ text "More than stars, customize the HTML" ]
     , p []
-        [ Rater.viewActiveCustom
-            { onChange = ChangedRating7
-            , maybeOnClear = Nothing
-            , maybeHoverConfig = Just
-                { state = model.rater7
-                , onHover = HoveredOverRater7
-                , onLeave = LeftRater7
-                , symbolTransient = text << String.fromInt
-                }
-            , orientation = Rater.Horizontal
-            , symbolEmpty = always (text "_")
-            , symbolPermanent = text << String.fromInt
-            }
+        [ Rater.view
+            (Rater.customConfig
+              { orientation = Rater.Horizontal
+              , symbolEmpty = Just <| always (text "_")
+              , symbolFull = Just <| text << String.fromInt
+              , onChange = ChangedRating7
+              , onClear = Nothing
+              , hoverConfig =
+                  Just
+                    { state = model.rater7
+                    , onHover = HoveredOverRater7
+                    , onLeave = LeftRater7
+                    }
+              })
             model.rating7
         ]
     , p []
-        [ Rater.viewActiveCustom
-            { onChange = ChangedRating7
-            , maybeOnClear = Nothing
-            , maybeHoverConfig = Just
-                { state = model.rater7
-                , onHover = HoveredOverRater7
-                , onLeave = LeftRater7
-                , symbolTransient =
+        [ Rater.view
+            (Rater.customConfig
+              { orientation = Rater.Horizontal
+              , symbolEmpty =
+                  Just <|
                     \value ->
                       span
-                        [ A.class "heart"
+                        [ A.class "elm-rater__heart"
                         , A.title (String.fromInt value)
                         ]
                         [ text "\u{2764}" ]
-                }
-            , orientation = Rater.Horizontal
-            , symbolEmpty =
-                \value ->
-                  span
-                    [ A.class "heart"
-                    , A.title (String.fromInt value)
-                    ]
-                    [ text "\u{2764}" ]
-            , symbolPermanent =
-                \value ->
-                  span
-                    [ A.class "heart"
-                    , A.title (String.fromInt value)
-                    ]
-                    [ text "\u{2764}" ]
-            }
+              , symbolFull =
+                  Just <|
+                    \value ->
+                      span
+                        [ A.class "elm-rater__heart"
+                        , A.title (String.fromInt value)
+                        ]
+                        [ text "\u{2764}" ]
+              , onChange = ChangedRating7
+              , onClear = Nothing
+              , hoverConfig =
+                  Just
+                    { state = model.rater7
+                    , onHover = HoveredOverRater7
+                    , onLeave = LeftRater7
+                    }
+              })
             model.rating7
         ]
     ]

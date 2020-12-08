@@ -2,26 +2,25 @@ module Rater exposing
   ( State
   , init
 
+  , viewReadOnly, viewDisabled
+
+  , Customizations, Orientation(..)
+  , defaultCustomizations
+
+  , viewCustomReadOnly, viewCustomDisabled
+
+  , Config, HoverConfig
+  , customConfig
+
   , viewSimple, viewClearable, viewHoverable
-  , viewReadOnly
-  , viewDisabled
+  , view
 
-  , Orientation(..)
-
-  , InactiveConfig
-  , viewReadOnlyCustom
-  , viewDisabledCustom
-
-  , ActiveConfig
-  , viewActiveCustom
-
-  , Config(..)
-  , viewCustom
+  , defaultSymbolEmpty, defaultSymbolFull
   )
 
 
 import Html exposing (Attribute, Html, div, span, text)
-import Html.Attributes exposing (class, style)
+import Html.Attributes exposing (class)
 import Html.Events as E
 import Rater.Rating as Rating exposing (Rating)
 
@@ -36,41 +35,23 @@ init =
   Permanent
 
 
-type Orientation
-  = Horizontal
-  | HorizontalReverse
-  | Vertical
-  | VerticalReverse
+type Config msg =
+  Config
+    { mode : Mode msg
+    , customizations : Customizations msg
+    }
 
 
-type Config msg
-  = ReadOnly (InactiveConfig msg)
-  | Disabled (InactiveConfig msg)
+type Mode msg
+  = ReadOnly
+  | Disabled
   | Active (ActiveConfig msg)
-
-
-type alias InactiveConfig msg =
-  { orientation : Orientation
-  , symbolEmpty : Int -> Html msg
-  , symbolPermanent : Int -> Html msg
-  }
-
-
-defaultInactiveConfig : InactiveConfig msg
-defaultInactiveConfig =
-  { orientation = Horizontal
-  , symbolEmpty = always defaultSymbolEmpty
-  , symbolPermanent = always defaultSymbolPermanent
-  }
 
 
 type alias ActiveConfig msg =
   { onChange : Rating -> msg
   , maybeOnClear : Maybe msg
   , maybeHoverConfig : Maybe (HoverConfig msg)
-  , orientation : Orientation
-  , symbolEmpty : Int -> Html msg
-  , symbolPermanent : Int -> Html msg
   }
 
 
@@ -78,200 +59,273 @@ type alias HoverConfig msg =
   { state : State
   , onHover : State -> Int -> msg
   , onLeave : State -> msg
-  , symbolTransient : Int -> Html msg
+  }
+
+
+type alias Customizations msg =
+  { orientation : Orientation
+  , symbolEmpty : Int -> Html msg
+  , symbolFull : Int -> Html msg
+  }
+
+
+type Orientation
+  = Horizontal
+  | HorizontalReverse
+  | Vertical
+  | VerticalReverse
+
+
+viewReadOnly : Rating -> Html msg
+viewReadOnly =
+  viewCustomReadOnly defaultCustomizations
+
+
+viewCustomReadOnly : Customizations msg -> Rating -> Html msg
+viewCustomReadOnly customizations =
+  view (Config { mode = ReadOnly, customizations = customizations })
+
+
+viewDisabled : Rating -> Html msg
+viewDisabled =
+  viewCustomDisabled defaultCustomizations
+
+
+viewCustomDisabled : Customizations msg -> Rating -> Html msg
+viewCustomDisabled customizations =
+  view (Config { mode = Disabled, customizations = customizations })
+
+
+defaultCustomizations : Customizations msg
+defaultCustomizations =
+  { orientation = Horizontal
+  , symbolEmpty = always defaultSymbolEmpty
+  , symbolFull = always defaultSymbolFull
   }
 
 
 viewSimple : (Rating -> msg) -> Rating -> Html msg
 viewSimple onChange rating =
   let
-    activeConfig =
-      { onChange = onChange
-      , maybeOnClear = Nothing
-      , maybeHoverConfig = Nothing
-      , orientation = Horizontal
-      , symbolEmpty = always defaultSymbolEmpty
-      , symbolPermanent = always defaultSymbolPermanent
-      }
+    config =
+      customConfig
+        { orientation = Horizontal
+        , symbolEmpty = Nothing
+        , symbolFull = Nothing
+        , onChange = onChange
+        , onClear = Nothing
+        , hoverConfig = Nothing
+        }
   in
-  viewActiveCustom activeConfig rating
+  view config rating
 
 
 viewClearable : (Rating -> msg) -> msg -> Rating -> Html msg
 viewClearable onChange onClear rating =
   let
-    activeConfig =
-      { onChange = onChange
-      , maybeOnClear = Just onClear
-      , maybeHoverConfig = Nothing
-      , orientation = Horizontal
-      , symbolEmpty = always defaultSymbolEmpty
-      , symbolPermanent = always defaultSymbolPermanent
-      }
+    config =
+      customConfig
+        { orientation = Horizontal
+        , symbolEmpty = Nothing
+        , symbolFull = Nothing
+        , onChange = onChange
+        , onClear = Just onClear
+        , hoverConfig = Nothing
+        }
   in
-  viewActiveCustom activeConfig rating
+  view config rating
 
 
 viewHoverable
   : { onChange : Rating -> msg
-    , maybeOnClear : Maybe msg
+    , onClear : Maybe msg
     , onHover : State -> Int -> msg
     , onLeave : State -> msg
     }
   -> State
   -> Rating
   -> Html msg
-viewHoverable { onChange, maybeOnClear, onHover, onLeave } state rating =
+viewHoverable options state rating =
   let
-    hoverConfig =
-      { state = state
-      , onHover = onHover
-      , onLeave = onLeave
-      , symbolTransient = always defaultSymbolTransient
-      }
+    config =
+      customConfig
+        { orientation = Horizontal
+        , symbolEmpty = Nothing
+        , symbolFull = Nothing
+        , onChange = options.onChange
+        , onClear = options.onClear
+        , hoverConfig =
+            Just
+              { state = state
+              , onHover = options.onHover
+              , onLeave = options.onLeave
+              }
+        }
+  in
+  view config rating
 
-    activeConfig =
-      { onChange = onChange
-      , maybeOnClear = maybeOnClear
-      , maybeHoverConfig = Just hoverConfig
-      , orientation = Horizontal
-      , symbolEmpty = always defaultSymbolEmpty
-      , symbolPermanent = always defaultSymbolPermanent
+
+customConfig
+  : { orientation : Orientation
+    , symbolEmpty : Maybe (Int -> Html msg)
+    , symbolFull : Maybe (Int -> Html msg)
+    , onChange : Rating -> msg
+    , onClear : Maybe msg
+    , hoverConfig : Maybe (HoverConfig msg)
+    }
+  -> Config msg
+customConfig options =
+  let
+    mode =
+      Active
+        { onChange = options.onChange
+        , maybeOnClear = options.onClear
+        , maybeHoverConfig = options.hoverConfig
+        }
+
+    customizations =
+      { orientation = options.orientation
+      , symbolEmpty = Maybe.withDefault (always defaultSymbolEmpty) options.symbolEmpty
+      , symbolFull = Maybe.withDefault (always defaultSymbolFull) options.symbolFull
       }
   in
-  viewActiveCustom activeConfig rating
+  Config { mode = mode, customizations = customizations }
 
 
-viewCustom : Config msg -> Rating -> Html msg
-viewCustom config rating =
-  case config of
-    ReadOnly inactiveConfig ->
-      viewReadOnlyCustom inactiveConfig rating
+view : Config msg -> Rating -> Html msg
+view (Config config) rating =
+  case config.mode of
+    ReadOnly ->
+      viewHelper
+        { orientation = config.customizations.orientation
+        , symbolEmpty = config.customizations.symbolEmpty
+        , symbolFull = config.customizations.symbolFull
+        , maybeHoverConfig = Nothing
+        , blockAttrs = [ class "elm-rater--read-only" ]
+        , symbolAttrs = always []
+        }
+        rating
 
-    Disabled inactiveConfig ->
-      viewDisabledCustom inactiveConfig rating
+    Disabled ->
+      viewHelper
+        { orientation = config.customizations.orientation
+        , symbolEmpty = config.customizations.symbolEmpty
+        , symbolFull = config.customizations.symbolFull
+        , maybeHoverConfig = Nothing
+        , blockAttrs = [ class "elm-rater--disabled" ]
+        , symbolAttrs = always []
+        }
+        rating
 
     Active activeConfig ->
-      viewActiveCustom activeConfig rating
+      let
+        changeConfig =
+          { onChange = activeConfig.onChange
+          , maybeOnClear = activeConfig.maybeOnClear
+          }
+      in
+      viewHelper
+        { orientation = config.customizations.orientation
+        , symbolEmpty = config.customizations.symbolEmpty
+        , symbolFull = config.customizations.symbolFull
+        , maybeHoverConfig = activeConfig.maybeHoverConfig
+        , blockAttrs = []
+        , symbolAttrs =
+            \value ->
+              List.concat
+                [ onClickAttrs changeConfig rating value
+                , onHoverAttrs activeConfig.maybeHoverConfig rating value
+                ]
+        }
+        rating
 
 
-viewActiveCustom : ActiveConfig msg -> Rating -> Html msg
-viewActiveCustom activeConfig rating =
+onClickAttrs
+  : { onChange : Rating -> msg
+    , maybeOnClear : Maybe msg
+    }
+  -> Rating
+  -> Int
+  -> List (Attribute msg)
+onClickAttrs { onChange, maybeOnClear } rating value =
   let
-    symbolConfig =
-      case activeConfig.maybeHoverConfig of
-        Nothing ->
-          NoState
-            { symbolEmpty = activeConfig.symbolEmpty
-            , symbolPermanent = activeConfig.symbolPermanent
-            }
+    ratio =
+      Rating.ratio rating
+  in
+    case maybeOnClear of
+      Nothing ->
+        if value == ratio.value then
+          []
+        else
+          [ E.onClick (onChange <| Rating.rate value rating) ]
 
-        Just hoverConfig ->
-          HasState
-            hoverConfig.state
-            { symbolEmpty = activeConfig.symbolEmpty
-            , symbolPermanent = activeConfig.symbolPermanent
-            , symbolTransient = hoverConfig.symbolTransient
-            }
+      Just onClear ->
+        if value == ratio.value then
+          [ E.onClick onClear ]
+        else
+          [ E.onClick (onChange <| Rating.rate value rating) ]
+
+
+onHoverAttrs : Maybe (HoverConfig msg) -> Rating -> Int -> List (Attribute msg)
+onHoverAttrs maybeHoverConfig rating value =
+  let
+    ratio =
+      Rating.ratio rating
+  in
+  case maybeHoverConfig of
+    Nothing ->
+      []
+
+    Just { onHover, onLeave } ->
+      let
+        transientRating =
+          Rating.outOf ratio.maxValue value
+      in
+      [ E.onMouseOver (onHover (Transient transientRating) value)
+      , E.onMouseOut (onLeave Permanent)
+      ]
+
+
+viewHelper
+  : { orientation : Orientation
+    , symbolEmpty : Int -> Html msg
+    , symbolFull : Int -> Html msg
+    , maybeHoverConfig : Maybe (HoverConfig msg)
+    , blockAttrs : List (Attribute msg)
+    , symbolAttrs : Int -> List (Attribute msg)
+    }
+  -> Rating
+  -> Html msg
+viewHelper options rating =
+  let
+    blockAttrs =
+      List.concat
+        [ [ class "elm-rater"
+          , class (orientationClass options.orientation)
+          ]
+        , options.blockAttrs
+        ]
 
     viewSymbols =
       List.indexedMap
-        (viewActiveSymbol activeConfig rating)
-        (symbols symbolConfig rating)
-  in
-  div
-    [ class "elm-rater"
-    , class (orientationClass activeConfig.orientation)
-    ]
-    [ div [ class "elm-rater__symbols" ] viewSymbols ]
+        (viewSymbol options.symbolAttrs)
+        (symbols symbolConfig maybeState rating)
 
-
-viewActiveSymbol : ActiveConfig msg -> Rating -> Int -> Symbol msg -> Html msg
-viewActiveSymbol activeConfig rating index symbol =
-  let
-    value =
-      index + 1
-
-    ratio =
-      Rating.ratio rating
-
-    clickAttrs =
-      case activeConfig.maybeOnClear of
-        Nothing ->
-          if value == ratio.value then
-            []
-          else
-            [ E.onClick (activeConfig.onChange <| Rating.rate value rating) ]
-
-        Just onClear ->
-          if value == ratio.value then
-            [ E.onClick onClear ]
-          else
-            [ E.onClick (activeConfig.onChange <| Rating.rate value rating) ]
-
-    hoverAttrs =
-      case activeConfig.maybeHoverConfig of
-        Nothing ->
-          []
-
-        Just hoverConfig ->
-          let
-            transientRating =
-              Rating.outOf ratio.maxValue value
-          in
-          [ E.onMouseOver (hoverConfig.onHover (Transient transientRating) value)
-          , E.onMouseOut (hoverConfig.onLeave Permanent)
-          ]
-  in
-  viewSymbol (clickAttrs ++ hoverAttrs) index symbol
-
-
-viewReadOnly : Rating -> Html msg
-viewReadOnly =
-  viewReadOnlyCustom defaultInactiveConfig
-
-
-viewReadOnlyCustom : InactiveConfig msg -> Rating -> Html msg
-viewReadOnlyCustom inactiveConfig rating =
-  let
     symbolConfig =
-      NoState
-        { symbolEmpty = inactiveConfig.symbolEmpty
-        , symbolPermanent = inactiveConfig.symbolPermanent
-        }
+      { symbolEmpty = options.symbolEmpty
+      , symbolFull = options.symbolFull
+      }
+
+    maybeState =
+      case options.maybeHoverConfig of
+        Nothing ->
+          Nothing
+
+        Just { state } ->
+          Just state
+
   in
-  div
-    [ class "elm-rater"
-    , class (orientationClass inactiveConfig.orientation)
-    , class "elm-rater--read-only"
-    ]
-    [ div [ class "elm-rater__symbols" ] <|
-        List.indexedMap (viewSymbol []) (symbols symbolConfig rating)
-    ]
-
-
-viewDisabled : Rating -> Html msg
-viewDisabled =
-  viewDisabledCustom defaultInactiveConfig
-
-
-viewDisabledCustom : InactiveConfig msg -> Rating -> Html msg
-viewDisabledCustom inactiveConfig rating =
-  let
-    symbolConfig =
-      NoState
-        { symbolEmpty = inactiveConfig.symbolEmpty
-        , symbolPermanent = inactiveConfig.symbolPermanent
-        }
-  in
-  div
-    [ class "elm-rater"
-    , class (orientationClass inactiveConfig.orientation)
-    , class "elm-rater--disabled"
-    ]
-    [ div [ class "elm-rater__symbols" ] <|
-        List.indexedMap (viewSymbol []) (symbols symbolConfig rating)
-    ]
+  div blockAttrs [ div [ class "elm-rater__symbols" ] viewSymbols ]
 
 
 orientationClass : Orientation -> String
@@ -295,31 +349,25 @@ type Symbol msg
   | Full (Int -> Html msg)
 
 
-type SymbolConfig msg
-  = NoState
-      { symbolEmpty : Int -> Html msg
-      , symbolPermanent : Int -> Html msg
-      }
-  | HasState State
-      { symbolEmpty : Int -> Html msg
-      , symbolPermanent : Int -> Html msg
-      , symbolTransient : Int -> Html msg
-      }
-
-
-symbols : SymbolConfig msg -> Rating -> List (Symbol msg)
-symbols config rating =
+symbols
+  : { symbolEmpty : Int -> Html msg
+    , symbolFull : Int -> Html msg
+    }
+  -> Maybe State
+  -> Rating
+  -> List (Symbol msg)
+symbols { symbolEmpty, symbolFull } maybeState rating =
   let
-    (currentRating, symbolEmpty, symbolFull) =
-      case config of
-        NoState custom ->
-          (rating, custom.symbolEmpty, custom.symbolPermanent)
+    currentRating =
+      case maybeState of
+        Nothing ->
+          rating
 
-        HasState Permanent custom ->
-          (rating, custom.symbolEmpty, custom.symbolPermanent)
+        Just Permanent ->
+          rating
 
-        HasState (Transient transientRating) custom ->
-          (transientRating, custom.symbolEmpty, custom.symbolTransient)
+        Just (Transient transientRating) ->
+          transientRating
 
     ratio =
       Rating.ratio currentRating
@@ -330,40 +378,40 @@ symbols config rating =
     numEmpty =
       ratio.maxValue - ratio.value
   in
-  List.repeat numFull (Full symbolFull) ++ List.repeat numEmpty (Empty symbolEmpty)
+  List.concat
+    [ List.repeat numFull (Full symbolFull)
+    , List.repeat numEmpty (Empty symbolEmpty)
+    ]
 
 
-viewSymbol : List (Attribute msg) -> Int -> Symbol msg -> Html msg
-viewSymbol attrs index symbol =
+viewSymbol : (Int -> List (Attribute msg)) -> Int -> Symbol msg -> Html msg
+viewSymbol toAttrs index symbol =
   let
     value =
       index + 1
 
-    (symbolAttrs, s) =
+    (symbolType, toHtml) =
       case symbol of
-        Empty f ->
-          ( [ class "elm-rater__symbol elm-rater__symbol--empty" ] ++ attrs
-          , f value
-          )
+        Empty s ->
+          ("elm-rater__symbol--empty", s)
 
-        Full f ->
-          ( [ class "elm-rater__symbol elm-rater__symbol--full" ] ++ attrs
-          , f value
-          )
+        Full s ->
+          ("elm-rater__symbol--full", s)
+
+    symbolAttrs =
+      List.concat
+        [ [ class "elm-rater__symbol", class symbolType ]
+        , toAttrs value
+        ]
   in
-  div symbolAttrs [ s ]
+  div symbolAttrs [ toHtml value ]
 
 
 defaultSymbolEmpty : Html msg
 defaultSymbolEmpty =
-  span [ class "star" ] [ text "\u{2606}" ]
+  span [ class "elm-rater__star" ] [ text "\u{2606}" ]
 
 
-defaultSymbolPermanent : Html msg
-defaultSymbolPermanent =
-  span [ class "star" ] [ text "\u{2605}" ]
-
-
-defaultSymbolTransient : Html msg
-defaultSymbolTransient =
-  defaultSymbolPermanent
+defaultSymbolFull : Html msg
+defaultSymbolFull =
+  span [ class "elm-rater__star" ] [ text "\u{2605}" ]
