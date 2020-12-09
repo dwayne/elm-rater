@@ -14,7 +14,7 @@ module Rater exposing
   , defaultSymbols, defaultSymbolEmpty, defaultSymbolFull
 
   , viewCustomReadOnly, viewCustomDisabled
-  , viewCustomHoverable
+  , viewCustomSimple, viewCustomClearable, viewCustomHoverable
 
   , Customization
   , defaultCustomization
@@ -257,6 +257,27 @@ viewSimple onChange rating =
   view config rating
 
 
+viewCustomSimple
+  : { orientation : Orientation
+    , symbols : SymbolsCustomization msg
+    , onChange : Rating -> msg
+    }
+  -> Rating
+  -> Html msg
+viewCustomSimple options rating =
+  let
+    config =
+      customConfig
+        { orientation = options.orientation
+        , symbols = Just options.symbols
+        , onChange = options.onChange
+        , onClear = Nothing
+        , hoverConfig = Nothing
+        }
+  in
+  view config rating
+
+
 viewClearable : (Rating -> msg) -> msg -> Rating -> Html msg
 viewClearable onChange onClear rating =
   let
@@ -266,6 +287,28 @@ viewClearable onChange onClear rating =
         , symbols = Nothing
         , onChange = onChange
         , onClear = Just onClear
+        , hoverConfig = Nothing
+        }
+  in
+  view config rating
+
+
+viewCustomClearable
+  : { orientation : Orientation
+    , symbols : SymbolsCustomization msg
+    , onChange : Rating -> msg
+    , onClear : msg
+    }
+  -> Rating
+  -> Html msg
+viewCustomClearable options rating =
+  let
+    config =
+      customConfig
+        { orientation = options.orientation
+        , symbols = Just options.symbols
+        , onChange = options.onChange
+        , onClear = Just options.onClear
         , hoverConfig = Nothing
         }
   in

@@ -57,6 +57,8 @@ type alias Model =
   , rating13 : Rating
   , rater13 : Rater.State
   , rater13MaybeTransientValue : Maybe Int
+
+  , rating14 : Rating
   }
 
 
@@ -97,6 +99,8 @@ init =
   , rating13 = Rating.outOf5 3
   , rater13 = Rater.init
   , rater13MaybeTransientValue = Nothing
+
+  , rating14 = Rating.outOf 10 1
   }
 
 
@@ -148,6 +152,8 @@ type Msg
   | ChangedRating13 Rating
   | HoveredOverRater13 Rater.State Int
   | LeftRater13 Rater.State
+
+  | ChangedRating14 Rating
 
 
 update : Msg -> Model -> Model
@@ -259,6 +265,9 @@ update msg model =
 
     LeftRater13 state ->
       { model | rater13 = state, rater13MaybeTransientValue = Nothing }
+
+    ChangedRating14 newRating ->
+      { model | rating14 = newRating }
 
 
 -- VIEW
@@ -482,7 +491,7 @@ view model =
         model.rater12
         model.rating12
 
-    , h3 [] [ text "Reversed Rating" ]
+    , h3 [] [ text "Horizontal Reverse Rating" ]
     , div
         [ A.class "rater13" ]
         [ Rater.viewCustomHoverable
@@ -507,6 +516,37 @@ view model =
 
                     Just transientValue ->
                       transientValue
+            ]
+        ]
+
+    , h3 [] [ text "Vertical Reverse Rating" ]
+    , p [] [ text "Notice that the hover effect is turned off." ]
+    , div [ A.class "rater14" ]
+        [ div
+            [ A.class "rater14__items" ]
+            [ Rater.viewCustomSimple
+                { orientation = Rater.verticalReverse
+                , symbols =
+                    Rater.sameSymbols <|
+                      always (div [ A.class "rater14__symbol" ] [])
+                , onChange = ChangedRating14
+                }
+                model.rating14
+            , span
+                [ A.class "rater14__value" ]
+                [ text <|
+                    String.fromInt (Rating.ratio model.rating14).value
+                ]
+            ]
+        ]
+    , p [] [ text "Click on a bar to change the rating." ]
+
+    , Html.footer
+        []
+        [ p [ A.style "font-size" "13px" ]
+            [ text "Created by "
+            , a [ A.href "http://dwaynecrooks.com/" ]
+                [ text "Dwayne Crooks" ]
             ]
         ]
     ]
