@@ -26,33 +26,37 @@ type alias Model =
   , rating2 : Rating
   , rating3 : Rating
 
-  , rater4 : Rater.State
   , rating4 : Rating
+  , rater4 : Rater.State
 
-  , rater5 : Rater.State
   , rating5 : Rating
+  , rater5 : Rater.State
   , rater5MaybeTransientValue : Maybe Int
 
   , rating6 : Rating
 
-  , rater7 : Rater.State
   , rating7 : Rating
+  , rater7 : Rater.State
 
   , rating8 : Rating
 
-  , rater9 : Rater.State
   , rating9 : Rating
+  , rater9 : Rater.State
   , rater9MaybeTransientValue : Maybe Int
 
-  , rater10 : Rater.State
   , rating10 : Rating
+  , rater10 : Rater.State
   , rater10MaybeTransientValue : Maybe Int
 
-  , rater11 : Rater.State
   , rating11 : Rating
+  , rater11 : Rater.State
 
-  , rater12 : Rater.State
   , rating12 : Rating
+  , rater12 : Rater.State
+
+  , rating13 : Rating
+  , rater13 : Rater.State
+  , rater13MaybeTransientValue : Maybe Int
   }
 
 
@@ -62,33 +66,37 @@ init =
   , rating2 = Rating.outOf 25 20
   , rating3 = Rating.outOf5 1
 
-  , rater4 = Rater.init
   , rating4 = Rating.outOf5 3
+  , rater4 = Rater.init
 
-  , rater5 = Rater.init
   , rating5 = Rating.outOf5 2
+  , rater5 = Rater.init
   , rater5MaybeTransientValue = Nothing
 
   , rating6 = Rating.outOf5 3
 
-  , rater7 = Rater.init
   , rating7 = Rating.outOf5 1
+  , rater7 = Rater.init
 
   , rating8 = Rating.outOf 10 5
 
-  , rater9 = Rater.init
   , rating9 = Rating.outOf 10 7
+  , rater9 = Rater.init
   , rater9MaybeTransientValue = Nothing
 
-  , rater10 = Rater.init
   , rating10 = Rating.outOf 4 2
+  , rater10 = Rater.init
   , rater10MaybeTransientValue = Nothing
 
-  , rater11 = Rater.init
   , rating11 = Rating.outOf5 0
+  , rater11 = Rater.init
 
-  , rater12 = Rater.init
   , rating12 = Rating.outOf 6 1
+  , rater12 = Rater.init
+
+  , rating13 = Rating.outOf5 3
+  , rater13 = Rater.init
+  , rater13MaybeTransientValue = Nothing
   }
 
 
@@ -136,6 +144,10 @@ type Msg
   | ClearedRater12
   | HoveredOverRater12 Rater.State Int
   | LeftRater12 Rater.State
+
+  | ChangedRating13 Rating
+  | HoveredOverRater13 Rater.State Int
+  | LeftRater13 Rater.State
 
 
 update : Msg -> Model -> Model
@@ -238,6 +250,15 @@ update msg model =
 
     LeftRater12 state ->
       { model | rater12 = state }
+
+    ChangedRating13 newRating ->
+      { model | rating13 = newRating }
+
+    HoveredOverRater13 state value ->
+      { model | rater13 = state, rater13MaybeTransientValue = Just value }
+
+    LeftRater13 state ->
+      { model | rater13 = state, rater13MaybeTransientValue = Nothing }
 
 
 -- VIEW
@@ -460,6 +481,34 @@ view model =
         }
         model.rater12
         model.rating12
+
+    , h3 [] [ text "Reversed Rating" ]
+    , div
+        [ A.class "rater13" ]
+        [ Rater.viewCustomHoverable
+            { orientation = Rater.horizontalReverse
+            , symbols =
+                Rater.sameSymbols <|
+                  always (div [ A.class "rater13__symbol" ] [])
+            , onChange = ChangedRating13
+            , onClear = Nothing
+            , onHover = HoveredOverRater13
+            , onLeave = LeftRater13
+            }
+            model.rater13
+            model.rating13
+        , span
+            [ A.class "rater13__value" ]
+            [ text <|
+                toRater13String <|
+                  case model.rater13MaybeTransientValue of
+                    Nothing ->
+                      (Rating.ratio model.rating13).value
+
+                    Just transientValue ->
+                      transientValue
+            ]
+        ]
     ]
 
 
@@ -505,6 +554,28 @@ toRater12String value =
 
     6 ->
       "F"
+
+    _ ->
+      ""
+
+
+toRater13String : Int -> String
+toRater13String value =
+  case value of
+    1 ->
+      "Strongly Disagree"
+
+    2 ->
+      "Disagree"
+
+    3 ->
+      "Neither Agree nor Disagree"
+
+    4 ->
+      "Agree"
+
+    5 ->
+      "Strongly Agree"
 
     _ ->
       ""
