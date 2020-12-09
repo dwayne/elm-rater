@@ -112,11 +112,11 @@ type Msg
   | ChangedRating2 Rating
 
   | ChangedRating3 Rating
-  | ClearedRater3
+  | ClearedRating3
   | ClickedClear3
 
   | ChangedRating4 Rating
-  | ClearedRater4
+  | ClearedRating4
   | HoveredOverRater4 Rater.State Int
   | LeftRater4 Rater.State
 
@@ -140,12 +140,12 @@ type Msg
   | LeftRater10 Rater.State
 
   | ChangedRating11 Rating
-  | ClearedRater11
+  | ClearedRating11
   | HoveredOverRater11 Rater.State Int
   | LeftRater11 Rater.State
 
   | ChangedRating12 Rating
-  | ClearedRater12
+  | ClearedRating12
   | HoveredOverRater12 Rater.State Int
   | LeftRater12 Rater.State
 
@@ -168,7 +168,7 @@ update msg model =
     ChangedRating3 newRating ->
       { model | rating3 = newRating }
 
-    ClearedRater3 ->
+    ClearedRating3 ->
       { model | rating3 = Rating.zero model.rating3 }
 
     ClickedClear3 ->
@@ -177,7 +177,7 @@ update msg model =
     ChangedRating4 newRating ->
       { model | rating4 = newRating }
 
-    ClearedRater4 ->
+    ClearedRating4 ->
       { model | rating4 = Rating.zero model.rating4 }
 
     HoveredOverRater4 state _ ->
@@ -236,7 +236,7 @@ update msg model =
     ChangedRating11 newRating ->
       { model | rating11 = newRating }
 
-    ClearedRater11 ->
+    ClearedRating11 ->
       { model | rating11 = Rating.zero model.rating11 }
 
     HoveredOverRater11 state _ ->
@@ -248,7 +248,7 @@ update msg model =
     ChangedRating12 newRating ->
       { model | rating12 = newRating }
 
-    ClearedRater12 ->
+    ClearedRating12 ->
       { model | rating12 = Rating.zero model.rating12 }
 
     HoveredOverRater12 state _ ->
@@ -285,7 +285,7 @@ view model =
     , Rater.viewSimple ChangedRating2 model.rating2
 
     , h2 [] [ text "You can enable clearing" ]
-    , Rater.viewClearable ChangedRating3 ClearedRater3 model.rating3
+    , Rater.viewClearable ChangedRating3 ClearedRating3 model.rating3
     , p []
         [ text <| String.join " "
             [ "By default you have to clear the rater by clicking on its"
@@ -298,7 +298,7 @@ view model =
     , h2 [] [ text "You can enable hovering" ]
     , Rater.viewHoverable
         { onChange = ChangedRating4
-        , onClear = Just ClearedRater4
+        , onClear = Just ClearedRating4
         , onHover = HoveredOverRater4
         , onLeave = LeftRater4
         }
@@ -467,7 +467,7 @@ view model =
                   [ A.class "rater11__symbol" ]
                   [ div [] [ text (String.fromInt value) ] ]
         , onChange = ChangedRating11
-        , onClear = Just ClearedRater11
+        , onClear = Just ClearedRating11
         , onHover = HoveredOverRater11
         , onLeave = LeftRater11
         }
@@ -484,7 +484,7 @@ view model =
                   [ A.class "rater12__symbol" ]
                   [ text (toRater12String value) ]
         , onChange = ChangedRating12
-        , onClear = Just ClearedRater12
+        , onClear = Just ClearedRating12
         , onHover = HoveredOverRater12
         , onLeave = LeftRater12
         }
@@ -545,7 +545,7 @@ view model =
         []
         [ p [ A.style "font-size" "13px" ]
             [ text "Created by "
-            , a [ A.href "http://dwaynecrooks.com/" ]
+            , a [ A.href "https://github.com/dwayne/" ]
                 [ text "Dwayne Crooks" ]
             ]
         ]
