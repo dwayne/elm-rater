@@ -38,21 +38,21 @@
 
 /* Star */
 
-.elm-rater__symbol .star {
+.elm-rater__star {
   font-size: 48px;
   color: orange;
 }
 
 /* Heart */
 
-.elm-rater__symbol .heart {
+.elm-rater__heart {
   font-size: 32px;
 }
 
-.elm-rater__symbol--empty .heart {
+.elm-rater__symbol--empty .elm-rater__heart {
   color: black;
 }
 
-.elm-rater__symbol--full .heart {
+.elm-rater__symbol--full .elm-rater__heart {
   color: red;
 }
