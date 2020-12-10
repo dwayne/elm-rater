@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="utf-8">
@@ -6,174 +6,146 @@
 
     <title>Elm Rater</title>
 
-    <style>
-      /* Rater9 */
+    <link rel="stylesheet" href="index.css">
 
-      .rater9-container {
+    <style>
+      .rater9 {
         display: flex;
         align-items: center;
       }
 
-      .rater9__star {
+      .rater9__symbol {
         margin: 1px;
         width: 12px;
         height: 28px;
         background-color: #fbedd9;
       }
 
-      .rater9__star.is-selected {
+      .elm-rater__symbol--full .rater9__symbol {
         background-color: #edb867;
       }
 
-      .amount9 {
+      .rater9__value {
         padding-left: 15px;
         font-weight: 400;
         color: #edb867;
       }
 
-      /* Rater10 */
-
-      .rater10-container {
+      .rater10 {
         display: inline-block;
       }
 
-      .rater10-inner-container {
+      .rater10__items {
         display: flex;
         flex-direction: column;
         align-items: center;
       }
 
-      .rater10__star {
+      .rater10__symbol {
         margin: 1px;
         width: 60px;
         height: 8px;
         background-color: #bbcefb;
       }
 
-      .rater10__star.is-selected {
+      .elm-rater__symbol--full .rater10__symbol {
         background-color: #4278f5;
       }
 
-      .value10 {
+      .rater10__value {
         padding-top: 0.5rem;
         font-weight: 400;
         color: #4278f5;
       }
 
-      /* Rater11 */
-
-      .rater11__star {
+      .rater11__symbol {
         display: flex;
         justify-content: center;
         align-items: center;
 
         margin: 1px;
+        border: 2px solid #bbcefb;
         width: 30px;
         height: 30px;
-        border: 2px solid #bbcefb;
 
         font-size: 14px;
-
-        color: #bbcefb;
         background-color: #fff;
+        color: #bbcefb;
       }
 
-      .rater11__star.is-selected {
+      .elm-rater__symbol--full .rater11__symbol {
         border: 2px solid #4278f5;
         color: #4278f5;
       }
 
-      /* Rater12 */
-
-      .rater12__star-wrapper {
-        display: inline-block;
-      }
-
-      .rater12__star-wrapper:first-child .rater12__star {
-        border-top-left-radius: 999px;
-        border-bottom-left-radius: 999px;
-      }
-
-      .rater12__star-wrapper:last-child .rater12__star {
-        border-top-right-radius: 999px;
-        border-bottom-right-radius: 999px;
-      }
-
-      .rater12__star {
+      .rater12__symbol {
         padding: 7px 15px;
 
         font-size: 13px;
         font-weight: 400;
-
-        color: #50e3c2;
         background-color: #bef5e8;
+        color: #50e3c2;
       }
 
-      .rater12__star.is-selected {
-        color: #fff;
+      .elm-rater__symbol--full .rater12__symbol {
         background-color: #50e3c2;
+        color: #fff;
       }
 
-      /* Rater13 */
+      .elm-rater__symbol:first-child .rater12__symbol {
+        border-top-left-radius: 999px;
+        border-bottom-left-radius: 999px;
+      }
 
-      .rater13-container {
-        display: flex;
-        align-items: center;
+      .elm-rater__symbol:last-child .rater12__symbol {
+        border-top-right-radius: 999px;
+        border-bottom-right-radius: 999px;
       }
 
       .rater13 {
         display: flex;
-        flex-direction: row-reverse;
-        cursor: pointer;
+        align-items: center;
       }
 
-      .rater13__star {
+      .rater13__symbol {
         margin: 1px;
         width: 22px;
         height: 22px;
         background-color: #bef5e8;
       }
 
-      .rater13__star.is-selected {
+      .elm-rater__symbol--full .rater13__symbol {
         background-color: #50e3c2;
       }
 
-      .value13 {
+      .rater13__value {
         padding-left: 15px;
         font-weight: 400;
         color: #50e3c2;
       }
 
-      /* Rater14 */
-
-      .rater14-container {
+      .rater14 {
         display: inline-block;
       }
 
-      .rater14-inner-container {
+      .rater14__items {
         display: flex;
         flex-direction: column;
         align-items: center;
       }
 
-      .rater14 {
-        display: flex;
-        flex-direction: column-reverse;
-        cursor: pointer;
-      }
-
-      .rater14__star {
+      .rater14__symbol {
         margin: 1px;
         width: 120px;
         height: 5px;
         background-color: #fbedd9;
       }
 
-      .rater14__star.is-selected {
+      .elm-rater__symbol--full .rater14__symbol {
         background-color: #edb867;
       }
 
-      .value14 {
+      .rater14__value {
         padding-top: 0.5rem;
         font-size: 18px;
         color: #edb867;
@@ -185,7 +157,7 @@
     <script src="app.js"></script>
     <script>
       Elm.Main.init({
-        node: document.getElementById("app")
+        node: document.getElementById('app')
       });
     </script>
   </body>

@@ -1,0 +1,58 @@
+.elm-rater {
+  display: inline-block;
+  cursor: pointer;
+}
+
+.elm-rater--read-only {
+  cursor: default;
+}
+
+.elm-rater--disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.elm-rater__symbols {
+  display: flex;
+}
+
+.elm-rater--horizontal .elm-rater__symbols {
+  flex-direction: row;
+}
+
+.elm-rater--horizontal-reverse .elm-rater__symbols {
+  flex-direction: row-reverse;
+}
+
+.elm-rater--vertical .elm-rater__symbols {
+  flex-direction: column;
+}
+
+.elm-rater--vertical-reverse .elm-rater__symbols {
+  flex-direction: column-reverse;
+}
+
+.elm-rater__symbol {
+  display: inline-block;
+}
+
+/* Star */
+
+.elm-rater__star {
+  font-size: 48px;
+  color: orange;
+}
+
+/* Heart */
+
+.elm-rater__heart {
+  font-size: 32px;
+}
+
+.elm-rater__symbol--empty .elm-rater__heart {
+  color: black;
+}
+
+.elm-rater__symbol--full .elm-rater__heart {
+  color: red;
+}
